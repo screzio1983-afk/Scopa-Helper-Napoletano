@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Griglia ON/OFF</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #1e1e2e;
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .reset {
+    align-self: flex-end;
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: background 0.15s ease;
+  }
+
+  .reset:hover {
+    background: #dc2626;
+  }
+
+  .board {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+  }
+
+  .suits {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+
+  .suit {
+    text-align: center;
+    font-size: clamp(0.9rem, 4vw, 1.4rem);
+    font-weight: bold;
+    padding: 2px;
+    border-radius: 6px;
+    background: #2a2a3e;
+    line-height: 1.1;
+  }
+
+  .suit small {
+    display: block;
+    font-size: clamp(0.5rem, 2vw, 0.65rem);
+    margin-top: 1px;
+    color: #aaa;
+  }
+
+  .grid {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    gap: 4px;
+    min-height: 0;
+  }
+
+  .btn {
+    border: 2px solid #444;
+    background: #2a2a3e;
+    color: #fff;
+    border-radius: 6px;
+    font-size: clamp(0.6rem, 2.5vw, 0.95rem);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    padding: 1px;
+    line-height: 1;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .btn:active { transform: scale(0.95); }
+
+  .btn .card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #fff;
+    border-radius: 4px;
+    transition: filter 0.15s ease, opacity 0.15s ease;
+  }
+
+  /* Tasto oscurato (premuto) */
+  .btn.on {
+    border-color: #ef4444;
+  }
+
+  .btn.on .card-img {
+    filter: brightness(0.25) grayscale(0.5);
+    opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+
+  <button class="reset" onclick="resetAll()">Reset</button>
+
+  <div class="board">
+    <div class="suits">
+      <div class="suit">🪙<small>DENARI</small></div>
+      <div class="suit">🏆<small>COPPE</small></div>
+      <div class="suit">⚔️<small>SPADE</small></div>
+      <div class="suit">🪵<small>BASTONI</small></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+<script>
+  const suits = ['DENARI', 'COPPE', 'SPADE', 'BASTONI'];
+  const ROWS = 10;
+  const COLS = 4;
+  const grid = document.getElementById('grid');
+  const STORAGE_PREFIX = 'btn_';
+
+  const fragment = document.createDocumentFragment();
+
+  for (let row = 1; row <= ROWS; row++) {
+    for (let col = 1; col <= COLS; col++) {
+      const index = (row - 1) * COLS + (col - 1);
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      btn.dataset.index = index;
+
+      const seme = suits[col - 1];
+      const nomeFile = `${row} ${seme}.jpg`;
+
+      const img = document.createElement('img');
+      img.src = nomeFile;
+      img.alt = `${row} di ${seme}`;
+      img.className = 'card-img';
+      img.onerror = function() {
+        this.style.display = 'none';
+        btn.textContent = `${row}\n${seme.slice(0, 3)}`;
+        btn.style.fontSize = 'clamp(0.55rem, 2vw, 0.8rem)';
+        btn.style.whiteSpace = 'pre-line';
+      };
+
+      btn.appendChild(img);
+
+      const saved = localStorage.getItem(STORAGE_PREFIX + index) === 'on';
+      if (saved) btn.classList.add('on');
+
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('on');
+        const isOn = btn.classList.contains('on');
+        localStorage.setItem(STORAGE_PREFIX + index, isOn ? 'on' : 'off');
+      });
+
+      fragment.appendChild(btn);
+    }
+  }
+
+  grid.appendChild(fragment);
+
+  function resetAll() {
+    if (!confirm('Riaccendere tutte le carte?')) return;
+    document.querySelectorAll('.btn').forEach((btn) => {
+      btn.classList.remove('on');
+      localStorage.setItem(STORAGE_PREFIX + btn.dataset.index, 'off');
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+NON MODIFICARE MAI:
+- il nome della cartella
+- il nome del file index.html
+
+Apporta le tue modifiche al codice e poi apri powershell e vai nella cartella della app scrivendo in powershell:
+
+cd Desktop
+cd Helper Scopa Napoletano
+
+Quando sei dentro la cartella scrivi in powershell:
+
+git add .
+git commit -m "cambiamento x"
+git push origin main
+
+Poi aspetta un paio di minuti e il sito si aggiorna
