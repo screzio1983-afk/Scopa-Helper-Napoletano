@@ -11,6 +11,7 @@
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
+    touch-action: manipulation;
   }
 
   body {
@@ -21,6 +22,7 @@
     flex-direction: column;
     padding: 4px;
     gap: 4px;
+    user-select: none;
   }
 
   /* ── TESSERE GIOCATORI ── */
@@ -105,9 +107,16 @@
     position: relative;
     min-height: 0;
     transition: transform 0.1s ease, box-shadow 0.15s ease;
+    touch-action: none; /* impedisce lo scroll/zoom durante il long press */
   }
 
-  .card:active { transform: scale(0.93); }
+  /* Feedback durante il long press: la carta si ingrandisce un po' */
+  .card.pressing {
+    transform: scale(0.92);
+    border-color: #fbbf24;
+    box-shadow: 0 0 12px rgba(251,191,36,0.9);
+    z-index: 2;
+  }
 
   .card img {
     width: 100%;
@@ -118,15 +127,7 @@
     pointer-events: none;
   }
 
-  .card.selected {
-    border-color: #fbbf24;
-    box-shadow: 0 0 10px rgba(251,191,36,0.9);
-  }
-
-  .card.selected img {
-    filter: brightness(0.5) sepia(0.4) saturate(2) hue-rotate(-20deg);
-  }
-
+  /* Carta presa (nel mazzo di qualcuno) */
   .card.taken {
     pointer-events: none;
     background: #15151f;
@@ -135,38 +136,56 @@
 
   .card.taken img { opacity: 0; }
 
-  /* ── BOTTONI AZIONE ── */
+  /* Carta uscita (scartata, non presa da nessuno) */
+  .card.discarded {
+    pointer-events: none;
+    background: #15151f;
+    border-color: #15151f;
+  }
+
+  .card.discarded img { opacity: 0.15; filter: grayscale(1); }
+
+  /* ── BARRA AZIONI ── */
   .actions {
     display: flex;
     gap: 4px;
     flex: 0 0 auto;
-    height: 44px;
-    visibility: hidden;
+    height: 42px;
   }
 
-  .actions.visible { visibility: visible; }
-
   .actions button {
-    flex: 1 1 0;
     border: none;
     border-radius: 8px;
     font-weight: bold;
-    font-size: clamp(0.8rem, 3.5vw, 1.05rem);
+    font-size: clamp(0.72rem, 3vw, 0.95rem);
     color: #fff;
     cursor: pointer;
-    transition: transform 0.1s ease, filter 0.15s ease;
+    transition: transform 0.1s ease, filter 0.15s ease, opacity 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
   }
 
   .actions button:active { transform: scale(0.96); filter: brightness(1.2); }
 
-  #btnPrese { background: #3b82f6; }
-  #btnScopa { background: #f59e0b; }
+  #btnScopa { background: #f59e0b; flex: 2 1 0; }
 
-  /* ── STATISTICHE COMPATTE (solo nostro punteggio) ── */
+  #btnUndo {
+    background: #475569;
+    flex: 1 1 0;
+  }
+
+  #btnUndo:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  /* ── STATISTICHE COMPATTE ── */
   .stats {
     flex: 0 0 auto;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 3px;
     background: #2a2a3e;
     border-radius: 8px;
@@ -196,7 +215,6 @@
 
   .stat.zero .value { color: #555; }
 
-  /* Settebello: 7 dorato */
   .stat .icon.gold-seven {
     color: #fbbf24;
     font-weight: 900;
@@ -204,7 +222,7 @@
     font-size: clamp(0.9rem, 3.6vw, 1.2rem);
   }
 
-  /* ── BANNER MANO ── */
+  /* ── BANNER ── */
   .mano-banner {
     position: fixed;
     top: 50%;
@@ -228,6 +246,27 @@
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
+
+  /* Istruzioni iniziali */
+  .hint {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    text-align: center;
+    z-index: 90;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    line-height: 1.4;
+  }
+
+  .hint.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -252,9 +291,9 @@
   <div class="grid" id="grid"></div>
 
   <!-- AZIONI -->
-  <div class="actions" id="actions">
-    <button id="btnPrese" onclick="confermaPrese(false)">PRESE</button>
-    <button id="btnScopa" onclick="confermaPrese(true)">SCOPA +1</button>
+  <div class="actions">
+    <button id="btnScopa" onclick="segnaScopa()">🧹 SCOPA +1</button>
+    <button id="btnUndo" onclick="undo()" disabled>↶ ANNULLA</button>
   </div>
 
   <!-- STATISTICHE COMPATTE -->
@@ -263,6 +302,12 @@
   <!-- BANNER -->
   <div class="mano-banner" id="banner"></div>
 
+  <!-- HINT -->
+  <div class="hint" id="hint">
+    <b>Tocca</b> = carta uscita<br>
+    <b>Tieni premuto</b> = carta presa
+  </div>
+
 <script>
   // ═══════════════════════════════════════════════
   //  CONFIGURAZIONE
@@ -270,21 +315,21 @@
   const SUITS = ['DENARI', 'COPPE', 'SPADE', 'BASTONI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_stato_v3';
+  const STORAGE_KEY = 'scopa_stato_v4';
+  const LONG_PRESS_MS = 450;
 
   const PRIMIERA_VALUE = {
     1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
     8: 10, 9: 10, 10: 10
   };
 
-  // Definizione delle voci statistiche (solo nostre)
+  // Voci statistiche (ordine: Denari, Primiera, Precedenti, Settebello, Carte)
   const STAT_ITEMS = [
-    { key: 'precedenti', icon: '📜', label: 'Precedenti' },
-    { key: 'scope',      icon: '🧹', label: 'Scope'      },
-    { key: 'settebello', icon: '7',  label: 'Settebello', gold: true },
-    { key: 'carte',      icon: '🃏', label: 'Carte'      },
     { key: 'denari',     icon: '🪙', label: 'Denari'     },
-    { key: 'primiera',   icon: '🎯', label: 'Primiera'   }
+    { key: 'primiera',   icon: '🎯', label: 'Primiera'   },
+    { key: 'precedenti', icon: '📜', label: 'Precedenti' },
+    { key: 'settebello', icon: '7',  label: 'Settebello', gold: true },
+    { key: 'carte',      icon: '🃏', label: 'Carte'      }
   ];
 
   // ═══════════════════════════════════════════════
@@ -292,13 +337,15 @@
   // ═══════════════════════════════════════════════
   let state = {
     activePlayer: 0,
-    selected: [],
     manoCorrente: 0,
     taken: [
       { carte: [], scope: 0, precedenti: 0 },
       { carte: [], scope: 0, precedenti: 0 }
     ]
   };
+
+  // Cronologia per Annulla (max 50 azioni)
+  let history = [];
 
   // ═══════════════════════════════════════════════
   //  UTILITÀ
@@ -343,13 +390,150 @@
       };
       card.appendChild(img);
 
-      card.addEventListener('click', () => toggleSelect(index));
+      attachCardHandlers(card, index);
       fragment.appendChild(card);
     }
   }
   grid.appendChild(fragment);
 
   const allCards = () => document.querySelectorAll('.card');
+
+  // ═══════════════════════════════════════════════
+  //  GESTIONE CLICK / LONG PRESS
+  // ═══════════════════════════════════════════════
+  function attachCardHandlers(card, index) {
+    let pressTimer = null;
+    let longPressFired = false;
+
+    const startPress = (e) => {
+      if (card.classList.contains('taken') || card.classList.contains('discarded')) return;
+      longPressFired = false;
+      card.classList.add('pressing');
+      pressTimer = setTimeout(() => {
+        longPressFired = true;
+        card.classList.remove('pressing');
+        eseguiPresa(index);
+        if (navigator.vibrate) navigator.vibrate(30);
+      }, LONG_PRESS_MS);
+    };
+
+    const cancelPress = () => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+      card.classList.remove('pressing');
+    };
+
+    const endPress = (e) => {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+      card.classList.remove('pressing');
+      // Se NON è stato un long press → click = uscita
+      if (!longPressFired) {
+        eseguiUscita(index);
+        if (navigator.vibrate) navigator.vibrate(10);
+      }
+      longPressFired = false;
+    };
+
+    card.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      startPress(e);
+    });
+    card.addEventListener('pointerup', endPress);
+    card.addEventListener('pointercancel', cancelPress);
+    card.addEventListener('pointerleave', cancelPress);
+    card.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+
+  // ═══════════════════════════════════════════════
+  //  AZIONI
+  // ═══════════════════════════════════════════════
+  function eseguiPresa(index) {
+    const el = allCards()[index];
+    if (!el || el.classList.contains('taken') || el.classList.contains('discarded')) return;
+
+    const player = state.activePlayer;
+    state.taken[player].carte.push(index);
+    el.classList.add('taken');
+
+    history.push({ tipo: 'presa', index, player });
+    if (history.length > 50) history.shift();
+
+    aggiornaUndo();
+    ricalcolaPunteggi();
+    saveState();
+  }
+
+  function eseguiUscita(index) {
+    const el = allCards()[index];
+    if (!el || el.classList.contains('taken') || el.classList.contains('discarded')) return;
+
+    el.classList.add('discarded');
+
+    history.push({ tipo: 'uscita', index });
+    if (history.length > 50) history.shift();
+
+    aggiornaUndo();
+    saveState();
+  }
+
+  function segnaScopa() {
+    const player = state.activePlayer;
+    state.taken[player].scope += 1;
+
+    history.push({ tipo: 'scopa', player });
+    if (history.length > 50) history.shift();
+
+    aggiornaUndo();
+    ricalcolaPunteggi();
+    saveState();
+
+    showBanner(`🧹 Scopa per ${player === 0 ? 'IO' : 'LORO'}!`);
+    if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  UNDO
+  // ═══════════════════════════════════════════════
+  function aggiornaUndo() {
+    document.getElementById('btnUndo').disabled = history.length === 0;
+  }
+
+  function undo() {
+    if (history.length === 0) return;
+    const azione = history.pop();
+    const el = allCards()[azione.index];
+
+    if (azione.tipo === 'presa') {
+      // Rimuovi la carta dal mazzo del giocatore
+      const mazzo = state.taken[azione.player].carte;
+      const pos = mazzo.lastIndexOf(azione.index);
+      if (pos !== -1) mazzo.splice(pos, 1);
+      el.classList.remove('taken');
+    } else if (azione.tipo === 'uscita') {
+      el.classList.remove('discarded');
+    } else if (azione.tipo === 'scopa') {
+      state.taken[azione.player].scope = Math.max(0, state.taken[azione.player].scope - 1);
+    }
+
+    aggiornaUndo();
+    ricalcolaPunteggi();
+    saveState();
+  }
+
+  // ═══════════════════════════════════════════════
+  //  CAMBIO GIOCATORE
+  // ═══════════════════════════════════════════════
+  function setActive(player) {
+    state.activePlayer = player;
+    document.getElementById('p0').classList.toggle('active', player === 0);
+    document.getElementById('p1').classList.toggle('active', player === 1);
+    saveState();
+  }
 
   // ═══════════════════════════════════════════════
   //  COSTRUZIONE STATISTICHE
@@ -378,63 +562,6 @@
     });
   }
   buildStats();
-
-  // ═══════════════════════════════════════════════
-  //  SELEZIONE CARTE
-  // ═══════════════════════════════════════════════
-  function toggleSelect(index) {
-    const el = allCards()[index];
-    if (el.classList.contains('taken')) return;
-
-    if (el.classList.contains('selected')) {
-      el.classList.remove('selected');
-      state.selected = state.selected.filter(i => i !== index);
-    } else {
-      el.classList.add('selected');
-      state.selected.push(index);
-    }
-    updateActions();
-    saveState();
-  }
-
-  function updateActions() {
-    const actions = document.getElementById('actions');
-    actions.classList.toggle('visible', state.selected.length > 0);
-  }
-
-  // ═══════════════════════════════════════════════
-  //  CONFERMA PRESE / SCOPA
-  // ═══════════════════════════════════════════════
-  function confermaPrese(isScopa) {
-    if (state.selected.length === 0) return;
-
-    const player = state.activePlayer;
-    const mazzo = state.taken[player];
-
-    state.selected.forEach(index => {
-      mazzo.carte.push(index);
-      const el = allCards()[index];
-      el.classList.remove('selected');
-      el.classList.add('taken');
-    });
-
-    if (isScopa) mazzo.scope += 1;
-
-    state.selected = [];
-    updateActions();
-    ricalcolaPunteggi();
-    saveState();
-  }
-
-  // ═══════════════════════════════════════════════
-  //  CAMBIO GIOCATORE
-  // ═══════════════════════════════════════════════
-  function setActive(player) {
-    state.activePlayer = player;
-    document.getElementById('p0').classList.toggle('active', player === 0);
-    document.getElementById('p1').classList.toggle('active', player === 1);
-    saveState();
-  }
 
   // ═══════════════════════════════════════════════
   //  CALCOLO PUNTEGGI
@@ -473,11 +600,11 @@
   function calcolaPuntiMano() {
     const stats = [calcolaStatsMano(0), calcolaStatsMano(1)];
 
-    // Denari: +1 a chi ha più ori
+    // Denari
     if (stats[0].denari !== stats[1].denari) {
       stats[stats[0].denari > stats[1].denari ? 0 : 1].denariPoint = 1;
     }
-    // Carte: +1 a chi supera 20 carte
+    // Carte
     if (stats[0].numCarte >= 21) stats[0].cartePoint = 1;
     if (stats[1].numCarte >= 21) stats[1].cartePoint = 1;
     // Primiera
@@ -498,29 +625,27 @@
   function ricalcolaPunteggi() {
     const stats = calcolaPuntiMano();
 
-    // Mostra solo i punti del giocatore 0 (IO) nella barra compatta
+    // Mostra solo i punti del giocatore 0 (IO) nella barra
     const valori = {
-      precedenti: state.taken[0].precedenti,
-      scope:      state.taken[0].scope,
-      settebello: stats[0].settebelloPoint,
-      carte:      stats[0].cartePoint,
       denari:     stats[0].denariPoint,
-      primiera:   stats[0].primieraPoint
+      primiera:   stats[0].primieraPoint,
+      precedenti: state.taken[0].precedenti,
+      settebello: stats[0].settebelloPoint,
+      carte:      stats[0].cartePoint
     };
 
-    let totale = 0;
+    let totaleVisibile = 0;
     STAT_ITEMS.forEach(item => {
       const v = valori[item.key];
-      totale += v;
+      totaleVisibile += v;
       const el = document.getElementById('val-' + item.key);
       const wrap = document.getElementById('stat-' + item.key);
       if (el) el.textContent = v;
       if (wrap) wrap.classList.toggle('zero', v === 0);
     });
 
-    // Punteggi nelle tessere giocatore
-    const tot0 = totale;
-    // Punteggio LORO: precedenti + scope + punti mano
+    // Totale IO: visibile + scope (che non è mostrata)
+    const tot0 = totaleVisibile + state.taken[0].scope;
     const tot1 = state.taken[1].precedenti
                + state.taken[1].scope
                + stats[1].settebelloPoint
@@ -530,8 +655,6 @@
 
     document.getElementById('score0').textContent = tot0;
     document.getElementById('score1').textContent = tot1;
-
-    return { stats, tot0, tot1 };
   }
 
   // ═══════════════════════════════════════════════
@@ -551,12 +674,11 @@
     });
 
     state.manoCorrente += 1;
-    state.selected = [];
+    history = [];
 
     // Ripristina griglia
     allCards().forEach((el, i) => {
-      el.classList.remove('taken', 'selected');
-      // Se era stato sostituito da fallback testuale, ricrea l'img
+      el.classList.remove('taken', 'discarded', 'pressing');
       if (!el.querySelector('img')) {
         el.innerHTML = '';
         el.style.background = '';
@@ -584,7 +706,7 @@
       }
     });
 
-    updateActions();
+    aggiornaUndo();
     ricalcolaPunteggi();
     saveState();
     showBanner(`Mano ${state.manoCorrente} conclusa!`);
@@ -627,15 +749,22 @@
         });
       });
 
-      state.selected.forEach(index => {
-        const el = allCards()[index];
-        if (el && !el.classList.contains('taken')) el.classList.add('selected');
-      });
-
       setActive(state.activePlayer);
-      updateActions();
       ricalcolaPunteggi();
     } catch(e) { console.warn('Errore caricamento stato', e); }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  HINT INIZIALE (appare solo la prima volta)
+  // ═══════════════════════════════════════════════
+  function showHintOnce() {
+    if (localStorage.getItem('scopa_hint_shown')) return;
+    const hint = document.getElementById('hint');
+    hint.classList.add('show');
+    setTimeout(() => {
+      hint.classList.remove('show');
+      localStorage.setItem('scopa_hint_shown', '1');
+    }, 4000);
   }
 
   // ═══════════════════════════════════════════════
@@ -643,6 +772,8 @@
   // ═══════════════════════════════════════════════
   loadState();
   ricalcolaPunteggi();
+  aggiornaUndo();
+  showHintOnce();
 </script>
 
 </body>
