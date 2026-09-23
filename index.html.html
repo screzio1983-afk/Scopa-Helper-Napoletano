@@ -2,196 +2,697 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Griglia ON/OFF</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Segna Punti Scopa</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   html, body {
     height: 100%;
     overflow: hidden;
+    overscroll-behavior: none;
   }
 
   body {
-    font-family: Arial, sans-serif;
+    font-family: -apple-system, Arial, sans-serif;
     background: #1e1e2e;
+    color: #fff;
     display: flex;
     flex-direction: column;
-    padding: 6px;
-    gap: 6px;
+    padding: 4px;
+    gap: 4px;
   }
 
-  .reset {
-    align-self: flex-end;
-    background: #ef4444;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 0.85rem;
-    cursor: pointer;
-    flex: 0 0 auto;
-    transition: background 0.15s ease;
-  }
-
-  .reset:hover {
-    background: #dc2626;
-  }
-
-  .board {
-    flex: 1 1 auto;
+  /* ── TESSERE GIOCATORI ── */
+  .players {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-height: 0;
-  }
-
-  .suits {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
     gap: 4px;
     flex: 0 0 auto;
+    align-items: stretch;
   }
 
-  .suit {
-    text-align: center;
-    font-size: clamp(0.9rem, 4vw, 1.4rem);
-    font-weight: bold;
-    padding: 2px;
-    border-radius: 6px;
+  .player {
+    flex: 1 1 0;
     background: #2a2a3e;
-    line-height: 1.1;
+    border: 2px solid #444;
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    transition: all 0.15s ease;
+    min-width: 0;
   }
 
-  .suit small {
-    display: block;
-    font-size: clamp(0.5rem, 2vw, 0.65rem);
-    margin-top: 1px;
-    color: #aaa;
+  .player .name {
+    font-size: clamp(0.7rem, 3vw, 0.95rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
+  .player .score {
+    font-size: clamp(1rem, 4.5vw, 1.4rem);
+    color: #fbbf24;
+  }
+
+  .player.active {
+    border-color: #22c55e;
+    background: #1a3a26;
+    box-shadow: 0 0 8px rgba(34,197,94,0.5);
+  }
+
+  .top-buttons {
+    display: flex;
+    gap: 3px;
+    flex: 0 0 auto;
+    flex-direction: column;
+  }
+
+  .top-buttons button {
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.68rem;
+    color: #fff;
+    cursor: pointer;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+
+  #btnFineMano { background: #8b5cf6; }
+  #btnReset    { background: #ef4444; }
+
+  /* ── GRIGLIA CARTE ── */
   .grid {
     flex: 1 1 auto;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(10, 1fr);
-    gap: 4px;
+    gap: 3px;
     min-height: 0;
   }
 
-  .btn {
-    border: 2px solid #444;
+  .card {
+    border: 1.5px solid #444;
     background: #2a2a3e;
-    color: #fff;
-    border-radius: 6px;
-    font-size: clamp(0.6rem, 2.5vw, 0.95rem);
-    font-weight: bold;
+    border-radius: 5px;
+    padding: 0;
     cursor: pointer;
-    transition: all 0.15s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    user-select: none;
-    padding: 1px;
-    line-height: 1;
-    min-height: 0;
     overflow: hidden;
     position: relative;
+    min-height: 0;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
   }
 
-  .btn:active { transform: scale(0.95); }
+  .card:active { transform: scale(0.93); }
 
-  .btn .card-img {
+  .card img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     display: block;
     background: #fff;
-    border-radius: 4px;
-    transition: filter 0.15s ease, opacity 0.15s ease;
+    pointer-events: none;
   }
 
-  /* Tasto oscurato (premuto) */
-  .btn.on {
-    border-color: #ef4444;
+  .card.selected {
+    border-color: #fbbf24;
+    box-shadow: 0 0 10px rgba(251,191,36,0.9);
   }
 
-  .btn.on .card-img {
-    filter: brightness(0.25) grayscale(0.5);
-    opacity: 0.7;
+  .card.selected img {
+    filter: brightness(0.5) sepia(0.4) saturate(2) hue-rotate(-20deg);
+  }
+
+  .card.taken {
+    pointer-events: none;
+    background: #15151f;
+    border-color: #15151f;
+  }
+
+  .card.taken img { opacity: 0; }
+
+  /* ── BOTTONI AZIONE ── */
+  .actions {
+    display: flex;
+    gap: 4px;
+    flex: 0 0 auto;
+    height: 46px;
+    visibility: hidden;
+  }
+
+  .actions.visible { visibility: visible; }
+
+  .actions button {
+    flex: 1 1 0;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: clamp(0.8rem, 3.5vw, 1.05rem);
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.15s ease;
+  }
+
+  .actions button:active { transform: scale(0.96); filter: brightness(1.2); }
+
+  #btnPrese { background: #3b82f6; }
+  #btnScopa { background: #f59e0b; }
+
+  /* ── TABELLA PUNTEGGI ── */
+  .scoreboard {
+    flex: 0 0 auto;
+    background: #2a2a3e;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: clamp(0.6rem, 2.6vw, 0.8rem);
+  }
+
+  .scoreboard table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .scoreboard th,
+  .scoreboard td {
+    padding: 2px 4px;
+    text-align: center;
+    border-bottom: 1px solid #3a3a4e;
+  }
+
+  .scoreboard th {
+    background: #35354a;
+    font-size: 0.9em;
+    color: #aaa;
+  }
+
+  .scoreboard .label {
+    text-align: left;
+    color: #ccc;
+    font-weight: normal;
+  }
+
+  .scoreboard .total-row td {
+    font-weight: bold;
+    font-size: 1.15em;
+    color: #fbbf24;
+    border-bottom: none;
+  }
+
+  .scoreboard .primiera-row td {
+    padding: 3px 2px;
+  }
+
+  .mini-cards {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .mini-cards img {
+    width: 14px;
+    height: 20px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 2px;
+    border: 1px solid #555;
+  }
+
+  .mini-cards .empty {
+    width: 14px;
+    height: 20px;
+    border: 1px dashed #444;
+    border-radius: 2px;
+    background: #1e1e2e;
+  }
+
+  /* ── BANNER MANO ── */
+  .mano-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: #8b5cf6;
+    color: #fff;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 1rem;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+
+  .mano-banner.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
 </style>
 </head>
 <body>
 
-  <button class="reset" onclick="resetAll()">Reset</button>
-
-  <div class="board">
-    <div class="suits">
-      <div class="suit">🪙<small>DENARI</small></div>
-      <div class="suit">🏆<small>COPPE</small></div>
-      <div class="suit">⚔️<small>SPADE</small></div>
-      <div class="suit">🪵<small>BASTONI</small></div>
+  <!-- TESSERE GIOCATORI -->
+  <div class="players">
+    <div class="player active" id="p0" onclick="setActive(0)">
+      <span class="name">IO</span>
+      <span class="score" id="score0">0</span>
     </div>
-    <div class="grid" id="grid"></div>
+    <div class="player" id="p1" onclick="setActive(1)">
+      <span class="name">LORO</span>
+      <span class="score" id="score1">0</span>
+    </div>
+    <div class="top-buttons">
+      <button id="btnFineMano" onclick="fineMano()">FINE MANO</button>
+      <button id="btnReset" onclick="resetAll()">RESET</button>
+    </div>
   </div>
 
+  <!-- GRIGLIA -->
+  <div class="grid" id="grid"></div>
+
+  <!-- AZIONI -->
+  <div class="actions" id="actions">
+    <button id="btnPrese" onclick="confermaPrese(false)">PRESE</button>
+    <button id="btnScopa" onclick="confermaPrese(true)">SCOPA +1</button>
+  </div>
+
+  <!-- TABELLA PUNTEGGI -->
+  <div class="scoreboard">
+    <table>
+      <tr>
+        <th class="label"></th>
+        <th>IO</th>
+        <th>LORO</th>
+      </tr>
+      <tr><td class="label">Precedenti</td><td id="stat-pre0">0</td><td id="stat-pre1">0</td></tr>
+      <tr><td class="label">Scope</td><td id="stat-sco0">0</td><td id="stat-sco1">0</td></tr>
+      <tr><td class="label">Settebello</td><td id="stat-set0">0</td><td id="stat-set1">0</td></tr>
+      <tr><td class="label">Carte</td><td id="stat-car0">0</td><td id="stat-car1">0</td></tr>
+      <tr><td class="label">Denari</td><td id="stat-den0">0</td><td id="stat-den1">0</td></tr>
+      <tr><td class="label">Primiera</td><td id="stat-pri0">0</td><td id="stat-pri1">0</td></tr>
+      <tr class="primiera-row">
+        <td class="label" style="font-size:0.85em;color:#888;">↳ carte</td>
+        <td><div class="mini-cards" id="mini0"></div></td>
+        <td><div class="mini-cards" id="mini1"></div></td>
+      </tr>
+      <tr class="total-row"><td class="label">Totale</td><td id="stat-tot0">0</td><td id="stat-tot1">0</td></tr>
+    </table>
+  </div>
+
+  <!-- BANNER -->
+  <div class="mano-banner" id="banner"></div>
+
 <script>
-  const suits = ['DENARI', 'COPPE', 'SPADE', 'BASTONI'];
+  // ═══════════════════════════════════════════════
+  //  CONFIGURAZIONE
+  // ═══════════════════════════════════════════════
+  const SUITS = ['DENARI', 'COPPE', 'SPADE', 'BASTONI'];
   const ROWS = 10;
   const COLS = 4;
-  const grid = document.getElementById('grid');
-  const STORAGE_PREFIX = 'btn_';
+  const STORAGE_KEY = 'scopa_stato_v2';
 
+  const PRIMIERA_VALUE = {
+    1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
+    8: 10, 9: 10, 10: 10
+  };
+
+  // ═══════════════════════════════════════════════
+  //  STATO
+  // ═══════════════════════════════════════════════
+  let state = {
+    activePlayer: 0,
+    selected: [],
+    manoCorrente: 0,           // numero della mano (1, 2, 3...)
+    taken: [
+      { carte: [], scope: 0, precedenti: 0 },
+      { carte: [], scope: 0, precedenti: 0 }
+    ]
+  };
+
+  // ═══════════════════════════════════════════════
+  //  UTILITÀ
+  // ═══════════════════════════════════════════════
+  function cardInfo(index) {
+    const row = Math.floor(index / COLS) + 1;
+    const col = index % COLS;
+    return { row, col, suit: SUITS[col] };
+  }
+
+  function cardFileName(index) {
+    const { row, suit } = cardInfo(index);
+    return `${row} ${suit}.jpg`;
+  }
+
+  // ═══════════════════════════════════════════════
+  //  COSTRUZIONE GRIGLIA
+  // ═══════════════════════════════════════════════
+  const grid = document.getElementById('grid');
   const fragment = document.createDocumentFragment();
 
   for (let row = 1; row <= ROWS; row++) {
-    for (let col = 1; col <= COLS; col++) {
-      const index = (row - 1) * COLS + (col - 1);
-      const btn = document.createElement('button');
-      btn.className = 'btn';
-      btn.dataset.index = index;
-
-      const seme = suits[col - 1];
-      const nomeFile = `${row} ${seme}.jpg`;
+    for (let col = 0; col < COLS; col++) {
+      const index = (row - 1) * COLS + col;
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.index = index;
 
       const img = document.createElement('img');
-      img.src = nomeFile;
-      img.alt = `${row} di ${seme}`;
-      img.className = 'card-img';
+      img.src = cardFileName(index);
+      img.alt = `${row} ${SUITS[col]}`;
       img.onerror = function() {
         this.style.display = 'none';
-        btn.textContent = `${row}\n${seme.slice(0, 3)}`;
-        btn.style.fontSize = 'clamp(0.55rem, 2vw, 0.8rem)';
-        btn.style.whiteSpace = 'pre-line';
+        card.style.background = '#333';
+        card.style.color = '#fff';
+        card.style.fontSize = '0.55rem';
+        card.style.display = 'flex';
+        card.style.alignItems = 'center';
+        card.style.justifyContent = 'center';
+        card.textContent = `${row}\n${SUITS[col].slice(0,3)}`;
+        card.style.whiteSpace = 'pre-line';
       };
+      card.appendChild(img);
 
-      btn.appendChild(img);
+      card.addEventListener('click', () => toggleSelect(index));
+      fragment.appendChild(card);
+    }
+  }
+  grid.appendChild(fragment);
 
-      const saved = localStorage.getItem(STORAGE_PREFIX + index) === 'on';
-      if (saved) btn.classList.add('on');
+  const allCards = () => document.querySelectorAll('.card');
 
-      btn.addEventListener('click', () => {
-        btn.classList.toggle('on');
-        const isOn = btn.classList.contains('on');
-        localStorage.setItem(STORAGE_PREFIX + index, isOn ? 'on' : 'off');
-      });
+  // ═══════════════════════════════════════════════
+  //  SELEZIONE CARTE
+  // ═══════════════════════════════════════════════
+  function toggleSelect(index) {
+    const el = allCards()[index];
+    if (el.classList.contains('taken')) return;
 
-      fragment.appendChild(btn);
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      state.selected = state.selected.filter(i => i !== index);
+    } else {
+      el.classList.add('selected');
+      state.selected.push(index);
+    }
+    updateActions();
+    saveState();
+  }
+
+  function updateActions() {
+    const actions = document.getElementById('actions');
+    actions.classList.toggle('visible', state.selected.length > 0);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  CONFERMA PRESE / SCOPA
+  // ═══════════════════════════════════════════════
+  function confermaPrese(isScopa) {
+    if (state.selected.length === 0) return;
+
+    const player = state.activePlayer;
+    const mazzo = state.taken[player];
+
+    state.selected.forEach(index => {
+      mazzo.carte.push(index);
+      const el = allCards()[index];
+      el.classList.remove('selected');
+      el.classList.add('taken');
+    });
+
+    if (isScopa) mazzo.scope += 1;
+
+    state.selected = [];
+    updateActions();
+    ricalcolaPunteggi();
+    saveState();
+  }
+
+  // ═══════════════════════════════════════════════
+  //  CAMBIO GIOCATORE
+  // ═══════════════════════════════════════════════
+  function setActive(player) {
+    state.activePlayer = player;
+    document.getElementById('p0').classList.toggle('active', player === 0);
+    document.getElementById('p1').classList.toggle('active', player === 1);
+    saveState();
+  }
+
+  // ═══════════════════════════════════════════════
+  //  CALCOLO PUNTEGGI
+  // ═══════════════════════════════════════════════
+  function calcolaStatsMano(player) {
+    const carte = state.taken[player].carte;
+    const numCarte = carte.length;
+    let denari = 0;
+    let hasSettebello = false;
+
+    const bestPerSuit = [null, null, null, null];
+    const suitSet = new Set();
+
+    carte.forEach(index => {
+      const { row, col, suit } = cardInfo(index);
+      suitSet.add(col);
+      if (suit === 'DENARI') denari++;
+      if (suit === 'DENARI' && row === 7) hasSettebello = true;
+
+      const val = PRIMIERA_VALUE[row] || 0;
+      if (!bestPerSuit[col] || val > bestPerSuit[col].value) {
+        bestPerSuit[col] = { value: val, row, suit };
+      }
+    });
+
+    const primiera = bestPerSuit.reduce((sum, b) => sum + (b ? b.value : 0), 0);
+
+    return {
+      numCarte, denari, hasSettebello, primiera,
+      bestPerSuit,
+      semiCompleti: suitSet.size,
+      denariPoint: 0, cartePoint: 0, primieraPoint: 0, settebelloPoint: 0
+    };
+  }
+
+  function ricalcolaPunteggi() {
+    const stats = [calcolaStatsMano(0), calcolaStatsMano(1)];
+
+    // Denari: +1 a chi ha più ori
+    if (stats[0].denari !== stats[1].denari) {
+      const winner = stats[0].denari > stats[1].denari ? 0 : 1;
+      stats[winner].denariPoint = 1;
+    }
+
+    // Carte: +1 a chi ha più di 20 carte
+    if (stats[0].numCarte >= 21) stats[0].cartePoint = 1;
+    if (stats[1].numCarte >= 21) stats[1].cartePoint = 1;
+
+    // Primiera
+    const p0Ok = stats[0].semiCompleti === 4;
+    const p1Ok = stats[1].semiCompleti === 4;
+    if (p0Ok && p1Ok) {
+      if (stats[0].primiera > stats[1].primiera) stats[0].primieraPoint = 1;
+      else if (stats[1].primiera > stats[0].primiera) stats[1].primieraPoint = 1;
+    } else if (p0Ok && !p1Ok) {
+      stats[0].primieraPoint = 1;
+    } else if (p1Ok && !p0Ok) {
+      stats[1].primieraPoint = 1;
+    }
+
+    // Settebello
+    [0,1].forEach(p => {
+      if (stats[p].hasSettebello) stats[p].settebelloPoint = 1;
+    });
+
+    // Aggiorna DOM
+    [0,1].forEach(p => {
+      const s = stats[p];
+      const sco = state.taken[p].scope;
+      const pre = state.taken[p].precedenti;
+
+      document.getElementById(`stat-pre${p}`).textContent = pre;
+      document.getElementById(`stat-sco${p}`).textContent = sco;
+      document.getElementById(`stat-set${p}`).textContent = s.settebelloPoint;
+      document.getElementById(`stat-car${p}`).textContent = s.cartePoint;
+      document.getElementById(`stat-den${p}`).textContent = s.denariPoint;
+      document.getElementById(`stat-pri${p}`).textContent = s.primieraPoint;
+
+      const totale = pre + sco + s.settebelloPoint + s.cartePoint
+                   + s.denariPoint + s.primieraPoint;
+      document.getElementById(`stat-tot${p}`).textContent = totale;
+      document.getElementById(`score${p}`).textContent = totale;
+
+      renderMiniCarte(p, s.bestPerSuit);
+    });
+  }
+
+  function renderMiniCarte(player, bestPerSuit) {
+    const container = document.getElementById(`mini${player}`);
+    container.innerHTML = '';
+    for (let col = 0; col < 4; col++) {
+      const b = bestPerSuit[col];
+      if (b) {
+        const img = document.createElement('img');
+        img.src = `${b.row} ${SUITS[col]}.jpg`;
+        img.title = `${b.row} di ${SUITS[col]} (${b.value})`;
+        img.onerror = function() {
+          const d = document.createElement('div');
+          d.className = 'empty';
+          d.textContent = b.row;
+          d.style.fontSize = '0.5rem';
+          d.style.display = 'flex';
+          d.style.alignItems = 'center';
+          d.style.justifyContent = 'center';
+          d.style.color = '#fff';
+          this.replaceWith(d);
+        };
+        container.appendChild(img);
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        container.appendChild(empty);
+      }
     }
   }
 
-  grid.appendChild(fragment);
+  // ═══════════════════════════════════════════════
+  //  FINE MANO — sposta tutto in Precedenti e azzera
+  // ═══════════════════════════════════════════════
+  function fineMano() {
+    // Calcola totale mano corrente per ciascun giocatore
+    const stats = [calcolaStatsMano(0), calcolaStatsMano(1)];
 
-  function resetAll() {
-    if (!confirm('Riaccendere tutte le carte?')) return;
-    document.querySelectorAll('.btn').forEach((btn) => {
-      btn.classList.remove('on');
-      localStorage.setItem(STORAGE_PREFIX + btn.dataset.index, 'off');
+    // Denari
+    if (stats[0].denari !== stats[1].denari) {
+      stats[stats[0].denari > stats[1].denari ? 0 : 1].denariPoint = 1;
+    }
+    // Carte
+    if (stats[0].numCarte >= 21) stats[0].cartePoint = 1;
+    if (stats[1].numCarte >= 21) stats[1].cartePoint = 1;
+    // Primiera
+    const p0Ok = stats[0].semiCompleti === 4;
+    const p1Ok = stats[1].semiCompleti === 4;
+    if (p0Ok && p1Ok) {
+      if (stats[0].primiera > stats[1].primiera) stats[0].primieraPoint = 1;
+      else if (stats[1].primiera > stats[0].primiera) stats[1].primieraPoint = 1;
+    } else if (p0Ok) stats[0].primieraPoint = 1;
+    else if (p1Ok) stats[1].primieraPoint = 1;
+    // Settebello
+    if (stats[0].hasSettebello) stats[0].settebelloPoint = 1;
+    if (stats[1].hasSettebello) stats[1].settebelloPoint = 1;
+
+    // Somma punti mano ai precedenti
+    [0,1].forEach(p => {
+      const s = stats[p];
+      const puntiMano = state.taken[p].scope
+                      + s.settebelloPoint + s.cartePoint
+                      + s.denariPoint + s.primieraPoint;
+      state.taken[p].precedenti += puntiMano;
+      // Azzera mazzo e scope per la prossima mano
+      state.taken[p].carte = [];
+      state.taken[p].scope = 0;
     });
+
+    state.manoCorrente += 1;
+    state.selected = [];
+
+    // Ripristina griglia
+    allCards().forEach(el => {
+      el.classList.remove('taken', 'selected');
+    });
+    updateActions();
+
+    // Ricostruisci immagine se era stata sostituita col fallback testuale
+    allCards().forEach((el, i) => {
+      if (!el.querySelector('img')) {
+        el.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = cardFileName(i);
+        img.alt = '';
+        img.onerror = function() {
+          this.style.display = 'none';
+          el.style.background = '#333';
+          el.style.color = '#fff';
+          el.style.fontSize = '0.55rem';
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.justifyContent = 'center';
+          const { row, suit } = cardInfo(i);
+          el.textContent = `${row}\n${suit.slice(0,3)}`;
+          el.style.whiteSpace = 'pre-line';
+        };
+        el.appendChild(img);
+        el.style.background = '';
+        el.style.color = '';
+        el.style.display = '';
+        el.style.alignItems = '';
+        el.style.justifyContent = '';
+        el.textContent = '';
+        el.style.whiteSpace = '';
+      }
+    });
+
+    ricalcolaPunteggi();
+    saveState();
+    showBanner(`Mano ${state.manoCorrente - 1} conclusa!`);
   }
+
+  function showBanner(text) {
+    const b = document.getElementById('banner');
+    b.textContent = text;
+    b.classList.add('show');
+    setTimeout(() => b.classList.remove('show'), 1400);
+  }
+
+  // ═══════════════════════════════════════════════
+  //  RESET TOTALE
+  // ═══════════════════════════════════════════════
+  function resetAll() {
+    if (!confirm('Azzerare TUTTO (partita e precedenti)?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+
+  // ═══════════════════════════════════════════════
+  //  SALVATAGGIO / CARICAMENTO
+  // ═══════════════════════════════════════════════
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function loadState() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const s = JSON.parse(raw);
+      state = s;
+
+      state.taken.forEach((mazzo) => {
+        mazzo.carte.forEach(index => {
+          const el = allCards()[index];
+          if (el) el.classList.add('taken');
+        });
+      });
+
+      state.selected.forEach(index => {
+        const el = allCards()[index];
+        if (el && !el.classList.contains('taken')) el.classList.add('selected');
+      });
+
+      setActive(state.activePlayer);
+      updateActions();
+      ricalcolaPunteggi();
+    } catch(e) { console.warn('Errore caricamento stato', e); }
+  }
+
+  // ═══════════════════════════════════════════════
+  //  AVVIO
+  // ═══════════════════════════════════════════════
+  loadState();
+  ricalcolaPunteggi();
 </script>
 
 </body>
