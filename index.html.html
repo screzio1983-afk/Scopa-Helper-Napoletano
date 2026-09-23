@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-<title>Segna Punti Scopa</title>
+<title>Segnapunti Scopa</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -25,45 +25,38 @@
     user-select: none;
   }
 
-  /* ── TESSERE GIOCATORI ── */
-  .players {
+  /* ── BARRA SUPERIORE (totale + reset) ── */
+  .topbar {
     display: flex;
     gap: 4px;
     flex: 0 0 auto;
     align-items: stretch;
   }
 
-  .player {
+  .total-box {
     flex: 1 1 0;
     background: #2a2a3e;
-    border: 2px solid #444;
+    border: 2px solid #fbbf24;
     border-radius: 8px;
-    padding: 4px 8px;
-    cursor: pointer;
+    padding: 4px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-weight: bold;
-    transition: all 0.15s ease;
     min-width: 0;
   }
 
-  .player .name {
-    font-size: clamp(0.7rem, 3vw, 0.95rem);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .total-box .label {
+    font-size: clamp(0.7rem, 3vw, 0.9rem);
+    color: #aaa;
+    font-weight: bold;
+    letter-spacing: 0.05em;
   }
 
-  .player .score {
-    font-size: clamp(1rem, 4.5vw, 1.4rem);
+  .total-box .value {
+    font-size: clamp(1.3rem, 6vw, 1.8rem);
     color: #fbbf24;
-  }
-
-  .player.active {
-    border-color: #22c55e;
-    background: #1a3a26;
-    box-shadow: 0 0 8px rgba(34,197,94,0.5);
+    font-weight: bold;
+    line-height: 1;
   }
 
   .top-buttons {
@@ -80,12 +73,11 @@
     font-size: 0.68rem;
     color: #fff;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 4px 10px;
     white-space: nowrap;
   }
 
-  #btnFineMano { background: #8b5cf6; }
-  #btnReset    { background: #ef4444; }
+  #btnReset { background: #ef4444; }
 
   /* ── GRIGLIA CARTE ── */
   .grid {
@@ -107,10 +99,9 @@
     position: relative;
     min-height: 0;
     transition: transform 0.1s ease, box-shadow 0.15s ease;
-    touch-action: none; /* impedisce lo scroll/zoom durante il long press */
+    touch-action: none;
   }
 
-  /* Feedback durante il long press: la carta si ingrandisce un po' */
   .card.pressing {
     transform: scale(0.92);
     border-color: #fbbf24;
@@ -127,25 +118,26 @@
     pointer-events: none;
   }
 
-  /* Carta presa (nel mazzo di qualcuno) */
+  /* Carta presa (nel tuo mazzo) */
   .card.taken {
     pointer-events: none;
     background: #15151f;
-    border-color: #15151f;
+    border-color: #22c55e;
+    box-shadow: inset 0 0 8px rgba(34,197,94,0.4);
   }
 
   .card.taken img { opacity: 0; }
 
-  /* Carta uscita (scartata, non presa da nessuno) */
+  /* Carta uscita (scartata) */
   .card.discarded {
     pointer-events: none;
     background: #15151f;
     border-color: #15151f;
   }
 
-  .card.discarded img { opacity: 0.15; filter: grayscale(1); }
+  .card.discarded img { opacity: 0.12; filter: grayscale(1); }
 
-  /* ── BARRA AZIONI ── */
+  /* ── AZIONI ── */
   .actions {
     display: flex;
     gap: 4px;
@@ -185,7 +177,7 @@
   .stats {
     flex: 0 0 auto;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 3px;
     background: #2a2a3e;
     border-radius: 8px;
@@ -199,6 +191,7 @@
     justify-content: center;
     gap: 1px;
     min-width: 0;
+    position: relative;
   }
 
   .stat .icon {
@@ -222,15 +215,22 @@
     font-size: clamp(0.9rem, 3.6vw, 1.2rem);
   }
 
+  .stat .label {
+    font-size: 0.55rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
   /* ── BANNER ── */
   .mano-banner {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.8);
-    background: #8b5cf6;
+    background: #22c55e;
     color: #fff;
-    padding: 16px 24px;
+    padding: 14px 22px;
     border-radius: 12px;
     font-weight: bold;
     font-size: 1rem;
@@ -247,15 +247,15 @@
     transform: translate(-50%, -50%) scale(1);
   }
 
-  /* Istruzioni iniziali */
+  /* ── HINT ── */
   .hint {
     position: fixed;
     bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.9);
     color: #fff;
-    padding: 8px 14px;
+    padding: 10px 16px;
     border-radius: 8px;
     font-size: 0.8rem;
     text-align: center;
@@ -263,26 +263,24 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
-    line-height: 1.4;
+    line-height: 1.5;
+    border: 1px solid #444;
   }
 
   .hint.show { opacity: 1; }
+
+  .hint b { color: #fbbf24; }
 </style>
 </head>
 <body>
 
-  <!-- TESSERE GIOCATORI -->
-  <div class="players">
-    <div class="player active" id="p0" onclick="setActive(0)">
-      <span class="name">IO</span>
-      <span class="score" id="score0">0</span>
-    </div>
-    <div class="player" id="p1" onclick="setActive(1)">
-      <span class="name">LORO</span>
-      <span class="score" id="score1">0</span>
+  <!-- BARRA SUPERIORE -->
+  <div class="topbar">
+    <div class="total-box">
+      <span class="label">TOTALE</span>
+      <span class="value" id="total">0</span>
     </div>
     <div class="top-buttons">
-      <button id="btnFineMano" onclick="fineMano()">FINE MANO</button>
       <button id="btnReset" onclick="resetAll()">RESET</button>
     </div>
   </div>
@@ -315,7 +313,7 @@
   const SUITS = ['DENARI', 'COPPE', 'SPADE', 'BASTONI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_stato_v4';
+  const STORAGE_KEY = 'scopa_mono_v1';
   const LONG_PRESS_MS = 450;
 
   const PRIMIERA_VALUE = {
@@ -323,28 +321,24 @@
     8: 10, 9: 10, 10: 10
   };
 
-  // Voci statistiche (ordine: Denari, Primiera, Precedenti, Settebello, Carte)
+  // Barra statistiche (solo il giocatore)
+  // Il valore mostrato è un CONTEGGIO (non punti +1)
   const STAT_ITEMS = [
-    { key: 'denari',     icon: '🪙', label: 'Denari'     },
-    { key: 'primiera',   icon: '🎯', label: 'Primiera'   },
-    { key: 'precedenti', icon: '📜', label: 'Precedenti' },
-    { key: 'settebello', icon: '7',  label: 'Settebello', gold: true },
-    { key: 'carte',      icon: '🃏', label: 'Carte'      }
+    { key: 'denari',     icon: '🪙', label: 'Ori'      },  // numero di carte di denari prese
+    { key: 'primiera',   icon: '🎯', label: 'Primiera' },  // valore primiera (es. 65)
+    { key: 'settebello', icon: '7',  label: 'Setteb.', gold: true }, // 0 o 1
+    { key: 'carte',      icon: '🃏', label: 'Carte'    }   // numero di carte prese
   ];
 
   // ═══════════════════════════════════════════════
-  //  STATO
+  //  STATO (mono-giocatore)
   // ═══════════════════════════════════════════════
   let state = {
-    activePlayer: 0,
-    manoCorrente: 0,
-    taken: [
-      { carte: [], scope: 0, precedenti: 0 },
-      { carte: [], scope: 0, precedenti: 0 }
-    ]
+    prese: [],       // array di indici carte prese con long press
+    scope: 0         // numero di scope fatte (contribuisce al totale)
   };
 
-  // Cronologia per Annulla (max 50 azioni)
+  // Cronologia per Annulla
   let history = [];
 
   // ═══════════════════════════════════════════════
@@ -399,13 +393,13 @@
   const allCards = () => document.querySelectorAll('.card');
 
   // ═══════════════════════════════════════════════
-  //  GESTIONE CLICK / LONG PRESS
+  //  CLICK / LONG PRESS
   // ═══════════════════════════════════════════════
   function attachCardHandlers(card, index) {
     let pressTimer = null;
     let longPressFired = false;
 
-    const startPress = (e) => {
+    const startPress = () => {
       if (card.classList.contains('taken') || card.classList.contains('discarded')) return;
       longPressFired = false;
       card.classList.add('pressing');
@@ -425,13 +419,12 @@
       card.classList.remove('pressing');
     };
 
-    const endPress = (e) => {
+    const endPress = () => {
       if (pressTimer) {
         clearTimeout(pressTimer);
         pressTimer = null;
       }
       card.classList.remove('pressing');
-      // Se NON è stato un long press → click = uscita
       if (!longPressFired) {
         eseguiUscita(index);
         if (navigator.vibrate) navigator.vibrate(10);
@@ -439,10 +432,7 @@
       longPressFired = false;
     };
 
-    card.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      startPress(e);
-    });
+    card.addEventListener('pointerdown', (e) => { e.preventDefault(); startPress(); });
     card.addEventListener('pointerup', endPress);
     card.addEventListener('pointercancel', cancelPress);
     card.addEventListener('pointerleave', cancelPress);
@@ -456,12 +446,11 @@
     const el = allCards()[index];
     if (!el || el.classList.contains('taken') || el.classList.contains('discarded')) return;
 
-    const player = state.activePlayer;
-    state.taken[player].carte.push(index);
+    state.prese.push(index);
     el.classList.add('taken');
 
-    history.push({ tipo: 'presa', index, player });
-    if (history.length > 50) history.shift();
+    history.push({ tipo: 'presa', index });
+    if (history.length > 100) history.shift();
 
     aggiornaUndo();
     ricalcolaPunteggi();
@@ -475,24 +464,23 @@
     el.classList.add('discarded');
 
     history.push({ tipo: 'uscita', index });
-    if (history.length > 50) history.shift();
+    if (history.length > 100) history.shift();
 
     aggiornaUndo();
     saveState();
   }
 
   function segnaScopa() {
-    const player = state.activePlayer;
-    state.taken[player].scope += 1;
+    state.scope += 1;
 
-    history.push({ tipo: 'scopa', player });
-    if (history.length > 50) history.shift();
+    history.push({ tipo: 'scopa' });
+    if (history.length > 100) history.shift();
 
     aggiornaUndo();
     ricalcolaPunteggi();
     saveState();
 
-    showBanner(`🧹 Scopa per ${player === 0 ? 'IO' : 'LORO'}!`);
+    showBanner(`🧹 Scopa! (+1)`);
     if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
   }
 
@@ -506,18 +494,17 @@
   function undo() {
     if (history.length === 0) return;
     const azione = history.pop();
-    const el = allCards()[azione.index];
 
     if (azione.tipo === 'presa') {
-      // Rimuovi la carta dal mazzo del giocatore
-      const mazzo = state.taken[azione.player].carte;
-      const pos = mazzo.lastIndexOf(azione.index);
-      if (pos !== -1) mazzo.splice(pos, 1);
-      el.classList.remove('taken');
+      const pos = state.prese.lastIndexOf(azione.index);
+      if (pos !== -1) state.prese.splice(pos, 1);
+      const el = allCards()[azione.index];
+      if (el) el.classList.remove('taken');
     } else if (azione.tipo === 'uscita') {
-      el.classList.remove('discarded');
+      const el = allCards()[azione.index];
+      if (el) el.classList.remove('discarded');
     } else if (azione.tipo === 'scopa') {
-      state.taken[azione.player].scope = Math.max(0, state.taken[azione.player].scope - 1);
+      state.scope = Math.max(0, state.scope - 1);
     }
 
     aggiornaUndo();
@@ -526,17 +513,7 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  CAMBIO GIOCATORE
-  // ═══════════════════════════════════════════════
-  function setActive(player) {
-    state.activePlayer = player;
-    document.getElementById('p0').classList.toggle('active', player === 0);
-    document.getElementById('p1').classList.toggle('active', player === 1);
-    saveState();
-  }
-
-  // ═══════════════════════════════════════════════
-  //  COSTRUZIONE STATISTICHE
+  //  STATISTICHE
   // ═══════════════════════════════════════════════
   function buildStats() {
     const container = document.getElementById('stats');
@@ -556,8 +533,13 @@
       val.id = 'val-' + item.key;
       val.textContent = '0';
 
+      const lab = document.createElement('div');
+      lab.className = 'label';
+      lab.textContent = item.label;
+
       div.appendChild(icon);
       div.appendChild(val);
+      div.appendChild(lab);
       container.appendChild(div);
     });
   }
@@ -566,21 +548,18 @@
   // ═══════════════════════════════════════════════
   //  CALCOLO PUNTEGGI
   // ═══════════════════════════════════════════════
-  function calcolaStatsMano(player) {
-    const carte = state.taken[player].carte;
-    const numCarte = carte.length;
-    let denari = 0;
+  function calcolaStats() {
+    let denari = 0;           // numero di ori presi
+    let numCarte = state.prese.length;
     let hasSettebello = false;
-
     const bestPerSuit = [null, null, null, null];
-    const suitSet = new Set();
 
-    carte.forEach(index => {
+    state.prese.forEach(index => {
       const { row, col, suit } = cardInfo(index);
-      suitSet.add(col);
-      if (suit === 'DENARI') denari++;
-      if (suit === 'DENARI' && row === 7) hasSettebello = true;
-
+      if (suit === 'DENARI') {
+        denari++;
+        if (row === 7) hasSettebello = true;
+      }
       const val = PRIMIERA_VALUE[row] || 0;
       if (!bestPerSuit[col] || val > bestPerSuit[col].value) {
         bestPerSuit[col] = { value: val, row, suit };
@@ -588,148 +567,62 @@
     });
 
     const primiera = bestPerSuit.reduce((sum, b) => sum + (b ? b.value : 0), 0);
+    const semiCompleti = bestPerSuit.filter(b => b !== null).length;
 
     return {
-      numCarte, denari, hasSettebello, primiera,
+      denari,           // conteggio ori (non punto)
+      numCarte,         // conteggio carte
+      hasSettebello,    // 0 o 1
+      primiera,         // valore (es. 65)
       bestPerSuit,
-      semiCompleti: suitSet.size,
-      denariPoint: 0, cartePoint: 0, primieraPoint: 0, settebelloPoint: 0
+      semiCompleti
     };
-  }
-
-  function calcolaPuntiMano() {
-    const stats = [calcolaStatsMano(0), calcolaStatsMano(1)];
-
-    // Denari
-    if (stats[0].denari !== stats[1].denari) {
-      stats[stats[0].denari > stats[1].denari ? 0 : 1].denariPoint = 1;
-    }
-    // Carte
-    if (stats[0].numCarte >= 21) stats[0].cartePoint = 1;
-    if (stats[1].numCarte >= 21) stats[1].cartePoint = 1;
-    // Primiera
-    const p0Ok = stats[0].semiCompleti === 4;
-    const p1Ok = stats[1].semiCompleti === 4;
-    if (p0Ok && p1Ok) {
-      if (stats[0].primiera > stats[1].primiera) stats[0].primieraPoint = 1;
-      else if (stats[1].primiera > stats[0].primiera) stats[1].primieraPoint = 1;
-    } else if (p0Ok && !p1Ok) stats[0].primieraPoint = 1;
-    else if (p1Ok && !p0Ok) stats[1].primieraPoint = 1;
-    // Settebello
-    if (stats[0].hasSettebello) stats[0].settebelloPoint = 1;
-    if (stats[1].hasSettebello) stats[1].settebelloPoint = 1;
-
-    return stats;
   }
 
   function ricalcolaPunteggi() {
-    const stats = calcolaPuntiMano();
+    const s = calcolaStats();
 
-    // Mostra solo i punti del giocatore 0 (IO) nella barra
+    // Barra statistiche: mostra i CONTEGGI
     const valori = {
-      denari:     stats[0].denariPoint,
-      primiera:   stats[0].primieraPoint,
-      precedenti: state.taken[0].precedenti,
-      settebello: stats[0].settebelloPoint,
-      carte:      stats[0].cartePoint
+      denari:     s.denari,
+      primiera:   s.semiCompleti === 4 ? s.primiera : 0, // mostra 0 finché non hai tutti i semi
+      settebello: s.hasSettebello ? 1 : 0,
+      carte:      s.numCarte
     };
 
-    let totaleVisibile = 0;
     STAT_ITEMS.forEach(item => {
       const v = valori[item.key];
-      totaleVisibile += v;
       const el = document.getElementById('val-' + item.key);
       const wrap = document.getElementById('stat-' + item.key);
       if (el) el.textContent = v;
       if (wrap) wrap.classList.toggle('zero', v === 0);
     });
 
-    // Totale IO: visibile + scope (che non è mostrata)
-    const tot0 = totaleVisibile + state.taken[0].scope;
-    const tot1 = state.taken[1].precedenti
-               + state.taken[1].scope
-               + stats[1].settebelloPoint
-               + stats[1].cartePoint
-               + stats[1].denariPoint
-               + stats[1].primieraPoint;
+    // TOTALE: solo dalle carte + scope
+    // Punti derivati dalle carte prese:
+    // - Settebello: 1 se hai il 7 di denari
+    // - Primiera: 1 se hai tutti e 4 i semi (indipendentemente dall'avversario)
+    // - Carte: 1 se hai più di 20 carte
+    // - Denari: non calcolabile senza sapere l'avversario → NON lo conto nel totale
+    const puntiCarte = (s.hasSettebello ? 1 : 0)
+                     + (s.numCarte >= 21 ? 1 : 0);
+    const puntiPrimiera = s.semiCompleti === 4 ? 1 : 0;
+    const totale = puntiCarte + puntiPrimiera + state.scope;
 
-    document.getElementById('score0').textContent = tot0;
-    document.getElementById('score1').textContent = tot1;
+    document.getElementById('total').textContent = totale;
   }
 
   // ═══════════════════════════════════════════════
-  //  FINE MANO
-  // ═══════════════════════════════════════════════
-  function fineMano() {
-    const stats = calcolaPuntiMano();
-
-    [0,1].forEach(p => {
-      const s = stats[p];
-      const puntiMano = state.taken[p].scope
-                      + s.settebelloPoint + s.cartePoint
-                      + s.denariPoint + s.primieraPoint;
-      state.taken[p].precedenti += puntiMano;
-      state.taken[p].carte = [];
-      state.taken[p].scope = 0;
-    });
-
-    state.manoCorrente += 1;
-    history = [];
-
-    // Ripristina griglia
-    allCards().forEach((el, i) => {
-      el.classList.remove('taken', 'discarded', 'pressing');
-      if (!el.querySelector('img')) {
-        el.innerHTML = '';
-        el.style.background = '';
-        el.style.color = '';
-        el.style.display = '';
-        el.style.alignItems = '';
-        el.style.justifyContent = '';
-        el.style.whiteSpace = '';
-        const img = document.createElement('img');
-        img.src = cardFileName(i);
-        img.alt = '';
-        img.onerror = function() {
-          this.style.display = 'none';
-          el.style.background = '#333';
-          el.style.color = '#fff';
-          el.style.fontSize = '0.55rem';
-          el.style.display = 'flex';
-          el.style.alignItems = 'center';
-          el.style.justifyContent = 'center';
-          const { row, suit } = cardInfo(i);
-          el.textContent = `${row}\n${suit.slice(0,3)}`;
-          el.style.whiteSpace = 'pre-line';
-        };
-        el.appendChild(img);
-      }
-    });
-
-    aggiornaUndo();
-    ricalcolaPunteggi();
-    saveState();
-    showBanner(`Mano ${state.manoCorrente} conclusa!`);
-  }
-
-  function showBanner(text) {
-    const b = document.getElementById('banner');
-    b.textContent = text;
-    b.classList.add('show');
-    setTimeout(() => b.classList.remove('show'), 1400);
-  }
-
-  // ═══════════════════════════════════════════════
-  //  RESET TOTALE
+  //  RESET
   // ═══════════════════════════════════════════════
   function resetAll() {
-    if (!confirm('Azzerare TUTTO (partita e precedenti)?')) return;
+    if (!confirm('Azzerare tutto?')) return;
     localStorage.removeItem(STORAGE_KEY);
     location.reload();
   }
 
   // ═══════════════════════════════════════════════
-  //  SALVATAGGIO / CARICAMENTO
+  //  SALVATAGGIO
   // ═══════════════════════════════════════════════
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -742,29 +635,32 @@
       const s = JSON.parse(raw);
       state = s;
 
-      state.taken.forEach((mazzo) => {
-        mazzo.carte.forEach(index => {
-          const el = allCards()[index];
-          if (el) el.classList.add('taken');
-        });
+      // Ripristina carte prese
+      state.prese.forEach(index => {
+        const el = allCards()[index];
+        if (el) el.classList.add('taken');
       });
-
-      setActive(state.activePlayer);
-      ricalcolaPunteggi();
     } catch(e) { console.warn('Errore caricamento stato', e); }
   }
 
   // ═══════════════════════════════════════════════
-  //  HINT INIZIALE (appare solo la prima volta)
+  //  BANNER + HINT
   // ═══════════════════════════════════════════════
+  function showBanner(text) {
+    const b = document.getElementById('banner');
+    b.textContent = text;
+    b.classList.add('show');
+    setTimeout(() => b.classList.remove('show'), 1200);
+  }
+
   function showHintOnce() {
-    if (localStorage.getItem('scopa_hint_shown')) return;
+    if (localStorage.getItem('scopa_mono_hint')) return;
     const hint = document.getElementById('hint');
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.remove('show');
-      localStorage.setItem('scopa_hint_shown', '1');
-    }, 4000);
+      localStorage.setItem('scopa_mono_hint', '1');
+    }, 5000);
   }
 
   // ═══════════════════════════════════════════════
