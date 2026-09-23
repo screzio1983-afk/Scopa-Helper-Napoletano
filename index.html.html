@@ -25,7 +25,7 @@
     user-select: none;
   }
 
-  /* ── BARRA SUPERIORE (totale + reset) ── */
+  /* ── BARRA SUPERIORE ── */
   .topbar {
     display: flex;
     gap: 4px;
@@ -98,16 +98,11 @@
     overflow: hidden;
     position: relative;
     min-height: 0;
-    transition: transform 0.1s ease, box-shadow 0.15s ease;
-    touch-action: none;
+    transition: transform 0.1s ease, box-shadow 0.15s ease,
+                background 0.15s ease, border-color 0.15s ease;
   }
 
-  .card.pressing {
-    transform: scale(0.92);
-    border-color: #fbbf24;
-    box-shadow: 0 0 12px rgba(251,191,36,0.9);
-    z-index: 2;
-  }
+  .card:active { transform: scale(0.93); }
 
   .card img {
     width: 100%;
@@ -116,26 +111,49 @@
     display: block;
     background: #fff;
     pointer-events: none;
+    transition: opacity 0.15s ease, filter 0.15s ease;
   }
 
-  /* Carta presa (nel tuo mazzo) */
-  .card.taken {
-    pointer-events: none;
-    background: #15151f;
-    border-color: #22c55e;
-    box-shadow: inset 0 0 8px rgba(34,197,94,0.4);
-  }
+  /* Stato 0: carta nuova (default) */
 
-  .card.taken img { opacity: 0; }
-
-  /* Carta uscita (scartata) */
+  /* Stato 1: carta uscita */
   .card.discarded {
-    pointer-events: none;
     background: #15151f;
     border-color: #15151f;
   }
 
-  .card.discarded img { opacity: 0.12; filter: grayscale(1); }
+  .card.discarded img {
+    opacity: 0.12;
+    filter: grayscale(1);
+  }
+
+  /* Stato 2: carta presa (nel tuo mazzo) */
+  .card.taken {
+    background: #15151f;
+    border-color: #22c55e;
+    box-shadow: inset 0 0 10px rgba(34,197,94,0.5);
+  }
+
+  .card.taken img { opacity: 0; }
+
+  /* Stato 3: carta scopa (presa + scopa) */
+  .card.scopa {
+    background: #15151f;
+    border-color: #f59e0b;
+    box-shadow: inset 0 0 12px rgba(245,158,11,0.7);
+  }
+
+  .card.scopa img { opacity: 0; }
+
+  /* Piccolo badge scopa */
+  .card.scopa::after {
+    content: '🧹';
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    font-size: 0.7rem;
+    line-height: 1;
+  }
 
   /* ── AZIONI ── */
   .actions {
@@ -157,27 +175,23 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
+    width: 100%;
   }
 
   .actions button:active { transform: scale(0.96); filter: brightness(1.2); }
 
-  #btnScopa { background: #f59e0b; flex: 2 1 0; }
-
-  #btnUndo {
-    background: #475569;
-    flex: 1 1 0;
-  }
+  #btnUndo { background: #475569; }
 
   #btnUndo:disabled {
     opacity: 0.35;
     cursor: not-allowed;
   }
 
-  /* ── STATISTICHE COMPATTE ── */
+  /* ── STATISTICHE ── */
   .stats {
     flex: 0 0 auto;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 3px;
     background: #2a2a3e;
     border-radius: 8px;
@@ -208,13 +222,6 @@
 
   .stat.zero .value { color: #555; }
 
-  .stat .icon.gold-seven {
-    color: #fbbf24;
-    font-weight: 900;
-    text-shadow: 0 0 4px rgba(251,191,36,0.7);
-    font-size: clamp(0.9rem, 3.6vw, 1.2rem);
-  }
-
   .stat .label {
     font-size: 0.55rem;
     color: #888;
@@ -228,7 +235,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.8);
-    background: #22c55e;
+    background: #f59e0b;
     color: #fff;
     padding: 14px 22px;
     border-radius: 12px;
@@ -263,7 +270,7 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
-    line-height: 1.5;
+    line-height: 1.6;
     border: 1px solid #444;
   }
 
@@ -290,11 +297,10 @@
 
   <!-- AZIONI -->
   <div class="actions">
-    <button id="btnScopa" onclick="segnaScopa()">🧹 SCOPA +1</button>
     <button id="btnUndo" onclick="undo()" disabled>↶ ANNULLA</button>
   </div>
 
-  <!-- STATISTICHE COMPATTE -->
+  <!-- STATISTICHE -->
   <div class="stats" id="stats"></div>
 
   <!-- BANNER -->
@@ -302,8 +308,9 @@
 
   <!-- HINT -->
   <div class="hint" id="hint">
-    <b>Tocca</b> = carta uscita<br>
-    <b>Tieni premuto</b> = carta presa
+    <b>1° tocco</b> = carta uscita<br>
+    <b>2° tocco</b> = carta presa<br>
+    <b>3° tocco</b> = scopa
   </div>
 
 <script>
@@ -313,32 +320,27 @@
   const SUITS = ['DENARI', 'COPPE', 'SPADE', 'BASTONI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_mono_v1';
-  const LONG_PRESS_MS = 450;
+  const STORAGE_KEY = 'scopa_mono_v3';
 
   const PRIMIERA_VALUE = {
     1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
     8: 10, 9: 10, 10: 10
   };
 
-  // Barra statistiche (solo il giocatore)
-  // Il valore mostrato è un CONTEGGIO (non punti +1)
+  // Barra statistiche (3 icone): Ori, Primiera, Carte
   const STAT_ITEMS = [
-    { key: 'denari',     icon: '🪙', label: 'Ori'      },  // numero di carte di denari prese
-    { key: 'primiera',   icon: '🎯', label: 'Primiera' },  // valore primiera (es. 65)
-    { key: 'settebello', icon: '7',  label: 'Setteb.', gold: true }, // 0 o 1
-    { key: 'carte',      icon: '🃏', label: 'Carte'    }   // numero di carte prese
+    { key: 'denari',   icon: '🪙', label: 'Ori'      },
+    { key: 'primiera', icon: '🎯', label: 'Primiera' },
+    { key: 'carte',    icon: '🃏', label: 'Carte'    }
   ];
 
   // ═══════════════════════════════════════════════
-  //  STATO (mono-giocatore)
+  //  STATO
   // ═══════════════════════════════════════════════
-  let state = {
-    prese: [],       // array di indici carte prese con long press
-    scope: 0         // numero di scope fatte (contribuisce al totale)
-  };
+  // Ogni carta ha uno stato: 0 = nuova, 1 = uscita, 2 = presa, 3 = scopa
+  let cardStates = new Array(ROWS * COLS).fill(0);
 
-  // Cronologia per Annulla
+  // Cronologia per Annulla (salva stato precedente)
   let history = [];
 
   // ═══════════════════════════════════════════════
@@ -384,7 +386,8 @@
       };
       card.appendChild(img);
 
-      attachCardHandlers(card, index);
+      card.addEventListener('click', () => ciclaStato(index));
+      card.addEventListener('contextmenu', (e) => e.preventDefault());
       fragment.appendChild(card);
     }
   }
@@ -393,95 +396,43 @@
   const allCards = () => document.querySelectorAll('.card');
 
   // ═══════════════════════════════════════════════
-  //  CLICK / LONG PRESS
+  //  CICLO DI STATO: nuova → uscita → presa → scopa → (torna a nuova? no)
   // ═══════════════════════════════════════════════
-  function attachCardHandlers(card, index) {
-    let pressTimer = null;
-    let longPressFired = false;
-
-    const startPress = () => {
-      if (card.classList.contains('taken') || card.classList.contains('discarded')) return;
-      longPressFired = false;
-      card.classList.add('pressing');
-      pressTimer = setTimeout(() => {
-        longPressFired = true;
-        card.classList.remove('pressing');
-        eseguiPresa(index);
-        if (navigator.vibrate) navigator.vibrate(30);
-      }, LONG_PRESS_MS);
-    };
-
-    const cancelPress = () => {
-      if (pressTimer) {
-        clearTimeout(pressTimer);
-        pressTimer = null;
-      }
-      card.classList.remove('pressing');
-    };
-
-    const endPress = () => {
-      if (pressTimer) {
-        clearTimeout(pressTimer);
-        pressTimer = null;
-      }
-      card.classList.remove('pressing');
-      if (!longPressFired) {
-        eseguiUscita(index);
-        if (navigator.vibrate) navigator.vibrate(10);
-      }
-      longPressFired = false;
-    };
-
-    card.addEventListener('pointerdown', (e) => { e.preventDefault(); startPress(); });
-    card.addEventListener('pointerup', endPress);
-    card.addEventListener('pointercancel', cancelPress);
-    card.addEventListener('pointerleave', cancelPress);
-    card.addEventListener('contextmenu', (e) => e.preventDefault());
-  }
-
+  // 1° click: 0 → 1 (uscita)
+  // 2° click: 1 → 2 (presa)
+  // 3° click: 2 → 3 (scopa)
+  // 4° click: 3 → 0 (ripristino? Sì, per correggere errori)
   // ═══════════════════════════════════════════════
-  //  AZIONI
-  // ═══════════════════════════════════════════════
-  function eseguiPresa(index) {
-    const el = allCards()[index];
-    if (!el || el.classList.contains('taken') || el.classList.contains('discarded')) return;
+  function ciclaStato(index) {
+    const vecchio = cardStates[index];
+    const nuovo = (vecchio + 1) % 4;
 
-    state.prese.push(index);
-    el.classList.add('taken');
+    history.push({ index, vecchio });
+    if (history.length > 200) history.shift();
 
-    history.push({ tipo: 'presa', index });
-    if (history.length > 100) history.shift();
-
-    aggiornaUndo();
-    ricalcolaPunteggi();
-    saveState();
-  }
-
-  function eseguiUscita(index) {
-    const el = allCards()[index];
-    if (!el || el.classList.contains('taken') || el.classList.contains('discarded')) return;
-
-    el.classList.add('discarded');
-
-    history.push({ tipo: 'uscita', index });
-    if (history.length > 100) history.shift();
-
-    aggiornaUndo();
-    saveState();
-  }
-
-  function segnaScopa() {
-    state.scope += 1;
-
-    history.push({ tipo: 'scopa' });
-    if (history.length > 100) history.shift();
-
+    applicaStato(index, nuovo);
     aggiornaUndo();
     ricalcolaPunteggi();
     saveState();
 
-    showBanner(`🧹 Scopa! (+1)`);
-    if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
+    if (navigator.vibrate) {
+      if (nuovo === 3) navigator.vibrate([30, 30, 30]); // scopa
+      else if (nuovo === 2) navigator.vibrate(30);       // presa
+      else navigator.vibrate(10);                        // uscita
+    }
+
+    if (nuovo === 3) showBanner('🧹 Scopa!');
+  }
+
+  function applicaStato(index, nuovo) {
+    cardStates[index] = nuovo;
+    const el = allCards()[index];
+    if (!el) return;
+
+    el.classList.remove('discarded', 'taken', 'scopa');
+    if (nuovo === 1) el.classList.add('discarded');
+    else if (nuovo === 2) el.classList.add('taken');
+    else if (nuovo === 3) el.classList.add('scopa');
   }
 
   // ═══════════════════════════════════════════════
@@ -494,19 +445,7 @@
   function undo() {
     if (history.length === 0) return;
     const azione = history.pop();
-
-    if (azione.tipo === 'presa') {
-      const pos = state.prese.lastIndexOf(azione.index);
-      if (pos !== -1) state.prese.splice(pos, 1);
-      const el = allCards()[azione.index];
-      if (el) el.classList.remove('taken');
-    } else if (azione.tipo === 'uscita') {
-      const el = allCards()[azione.index];
-      if (el) el.classList.remove('discarded');
-    } else if (azione.tipo === 'scopa') {
-      state.scope = Math.max(0, state.scope - 1);
-    }
-
+    applicaStato(azione.index, azione.vecchio);
     aggiornaUndo();
     ricalcolaPunteggi();
     saveState();
@@ -525,7 +464,7 @@
       div.title = item.label;
 
       const icon = document.createElement('div');
-      icon.className = 'icon' + (item.gold ? ' gold-seven' : '');
+      icon.className = 'icon';
       icon.textContent = item.icon;
 
       const val = document.createElement('div');
@@ -546,48 +485,84 @@
   buildStats();
 
   // ═══════════════════════════════════════════════
-  //  CALCOLO PUNTEGGI
+  //  CALCOLO
+  // ═══════════════════════════════════════════════
+  // Carte "mie" = stato 2 (presa) o 3 (scopa)
+  // Carte "uscite" = stato 1 (uscita)
+  // Scope = numero di carte in stato 3
   // ═══════════════════════════════════════════════
   function calcolaStats() {
-    let denari = 0;           // numero di ori presi
-    let numCarte = state.prese.length;
+    let denari = 0;
+    let numCarte = 0;
+    let numScope = 0;
     let hasSettebello = false;
-    const bestPerSuit = [null, null, null, null];
 
-    state.prese.forEach(index => {
+    const bestPerSuitMie = [null, null, null, null];
+    const bestPerSuitUscite = [null, null, null, null];
+
+    cardStates.forEach((stato, index) => {
       const { row, col, suit } = cardInfo(index);
-      if (suit === 'DENARI') {
-        denari++;
-        if (row === 7) hasSettebello = true;
-      }
       const val = PRIMIERA_VALUE[row] || 0;
-      if (!bestPerSuit[col] || val > bestPerSuit[col].value) {
-        bestPerSuit[col] = { value: val, row, suit };
+
+      if (stato === 2 || stato === 3) {
+        // Carta mia
+        numCarte++;
+        if (stato === 3) numScope++;
+        if (suit === 'DENARI') {
+          denari++;
+          if (row === 7) hasSettebello = true;
+        }
+        if (!bestPerSuitMie[col] || val > bestPerSuitMie[col].value) {
+          bestPerSuitMie[col] = { value: val, row, suit };
+        }
+      } else if (stato === 1) {
+        // Carta uscita (dell'avversario)
+        if (!bestPerSuitUscite[col] || val > bestPerSuitUscite[col].value) {
+          bestPerSuitUscite[col] = { value: val, row, suit };
+        }
       }
     });
 
-    const primiera = bestPerSuit.reduce((sum, b) => sum + (b ? b.value : 0), 0);
-    const semiCompleti = bestPerSuit.filter(b => b !== null).length;
+    // Primiera: +1 se in OGNI seme la mia carta più alta batte quella uscita.
+    // Considero solo i semi in cui ho almeno una carta.
+    // Se in un seme non ho carte → non posso vincere la primiera.
+    let primieraVinta = false;
+    let semiValidi = 0;
+    let semiVinti = 0;
+
+    for (let col = 0; col < 4; col++) {
+      const mia = bestPerSuitMie[col];
+      if (!mia) continue; // non ho carte di questo seme
+      semiValidi++;
+      const sua = bestPerSuitUscite[col];
+      if (!sua || mia.value > sua.value) {
+        semiVinti++;
+      }
+    }
+    // Primiera valida solo se ho tutti e 4 i semi e li vinco tutti
+    primieraVinta = (semiValidi === 4 && semiVinti === 4);
+
+    // Valore primiera (solo per display, somma delle mie carte migliori)
+    const primieraValore = bestPerSuitMie.reduce((sum, b) => sum + (b ? b.value : 0), 0);
 
     return {
-      denari,           // conteggio ori (non punto)
-      numCarte,         // conteggio carte
-      hasSettebello,    // 0 o 1
-      primiera,         // valore (es. 65)
-      bestPerSuit,
-      semiCompleti
+      denari,
+      numCarte,
+      numScope,
+      hasSettebello,
+      primieraValore,
+      primieraVinta
     };
   }
 
   function ricalcolaPunteggi() {
     const s = calcolaStats();
 
-    // Barra statistiche: mostra i CONTEGGI
+    // Barra statistiche
     const valori = {
-      denari:     s.denari,
-      primiera:   s.semiCompleti === 4 ? s.primiera : 0, // mostra 0 finché non hai tutti i semi
-      settebello: s.hasSettebello ? 1 : 0,
-      carte:      s.numCarte
+      denari:   s.denari,
+      primiera: s.primieraVinta ? 1 : 0,   // 1 se vinta, 0 altrimenti
+      carte:    s.numCarte
     };
 
     STAT_ITEMS.forEach(item => {
@@ -598,18 +573,13 @@
       if (wrap) wrap.classList.toggle('zero', v === 0);
     });
 
-    // TOTALE: solo dalle carte + scope
-    // Punti derivati dalle carte prese:
-    // - Settebello: 1 se hai il 7 di denari
-    // - Primiera: 1 se hai tutti e 4 i semi (indipendentemente dall'avversario)
-    // - Carte: 1 se hai più di 20 carte
-    // - Denari: non calcolabile senza sapere l'avversario → NON lo conto nel totale
-    const puntiCarte = (s.hasSettebello ? 1 : 0)
-                     + (s.numCarte >= 21 ? 1 : 0);
-    const puntiPrimiera = s.semiCompleti === 4 ? 1 : 0;
-    const totale = puntiCarte + puntiPrimiera + state.scope;
+    // Totale
+    const punti = (s.hasSettebello ? 1 : 0)
+                + (s.numCarte >= 21 ? 1 : 0)
+                + (s.primieraVinta ? 1 : 0)
+                + s.numScope;
 
-    document.getElementById('total').textContent = totale;
+    document.getElementById('total').textContent = punti;
   }
 
   // ═══════════════════════════════════════════════
@@ -625,21 +595,20 @@
   //  SALVATAGGIO
   // ═══════════════════════════════════════════════
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cardStates));
   }
 
   function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     try {
-      const s = JSON.parse(raw);
-      state = s;
-
-      // Ripristina carte prese
-      state.prese.forEach(index => {
-        const el = allCards()[index];
-        if (el) el.classList.add('taken');
-      });
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length === cardStates.length) {
+        cardStates = arr;
+        cardStates.forEach((stato, index) => {
+          applicaStato(index, stato);
+        });
+      }
     } catch(e) { console.warn('Errore caricamento stato', e); }
   }
 
@@ -650,17 +619,17 @@
     const b = document.getElementById('banner');
     b.textContent = text;
     b.classList.add('show');
-    setTimeout(() => b.classList.remove('show'), 1200);
+    setTimeout(() => b.classList.remove('show'), 1100);
   }
 
   function showHintOnce() {
-    if (localStorage.getItem('scopa_mono_hint')) return;
+    if (localStorage.getItem('scopa_mono_hint_v3')) return;
     const hint = document.getElementById('hint');
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.remove('show');
-      localStorage.setItem('scopa_mono_hint', '1');
-    }, 5000);
+      localStorage.setItem('scopa_mono_hint_v3', '1');
+    }, 5500);
   }
 
   // ═══════════════════════════════════════════════
