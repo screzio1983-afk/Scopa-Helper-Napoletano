@@ -140,7 +140,7 @@
     display: flex;
     gap: 4px;
     flex: 0 0 auto;
-    height: 46px;
+    height: 44px;
     visibility: hidden;
   }
 
@@ -162,71 +162,46 @@
   #btnPrese { background: #3b82f6; }
   #btnScopa { background: #f59e0b; }
 
-  /* ── TABELLA PUNTEGGI ── */
-  .scoreboard {
+  /* ── STATISTICHE COMPATTE (solo nostro punteggio) ── */
+  .stats {
     flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 3px;
     background: #2a2a3e;
     border-radius: 8px;
-    overflow: hidden;
-    font-size: clamp(0.6rem, 2.6vw, 0.8rem);
+    padding: 4px 5px;
   }
 
-  .scoreboard table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .scoreboard th,
-  .scoreboard td {
-    padding: 2px 4px;
-    text-align: center;
-    border-bottom: 1px solid #3a3a4e;
-  }
-
-  .scoreboard th {
-    background: #35354a;
-    font-size: 0.9em;
-    color: #aaa;
-  }
-
-  .scoreboard .label {
-    text-align: left;
-    color: #ccc;
-    font-weight: normal;
-  }
-
-  .scoreboard .total-row td {
-    font-weight: bold;
-    font-size: 1.15em;
-    color: #fbbf24;
-    border-bottom: none;
-  }
-
-  .scoreboard .primiera-row td {
-    padding: 3px 2px;
-  }
-
-  .mini-cards {
+  .stat {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 2px;
+    gap: 1px;
+    min-width: 0;
   }
 
-  .mini-cards img {
-    width: 14px;
-    height: 20px;
-    object-fit: contain;
-    background: #fff;
-    border-radius: 2px;
-    border: 1px solid #555;
+  .stat .icon {
+    font-size: clamp(0.85rem, 3.2vw, 1.1rem);
+    line-height: 1;
   }
 
-  .mini-cards .empty {
-    width: 14px;
-    height: 20px;
-    border: 1px dashed #444;
-    border-radius: 2px;
-    background: #1e1e2e;
+  .stat .value {
+    font-size: clamp(0.75rem, 3vw, 1rem);
+    font-weight: bold;
+    line-height: 1;
+    color: #fbbf24;
+  }
+
+  .stat.zero .value { color: #555; }
+
+  /* Settebello: 7 dorato */
+  .stat .icon.gold-seven {
+    color: #fbbf24;
+    font-weight: 900;
+    text-shadow: 0 0 4px rgba(251,191,36,0.7);
+    font-size: clamp(0.9rem, 3.6vw, 1.2rem);
   }
 
   /* ── BANNER MANO ── */
@@ -282,28 +257,8 @@
     <button id="btnScopa" onclick="confermaPrese(true)">SCOPA +1</button>
   </div>
 
-  <!-- TABELLA PUNTEGGI -->
-  <div class="scoreboard">
-    <table>
-      <tr>
-        <th class="label"></th>
-        <th>IO</th>
-        <th>LORO</th>
-      </tr>
-      <tr><td class="label">Precedenti</td><td id="stat-pre0">0</td><td id="stat-pre1">0</td></tr>
-      <tr><td class="label">Scope</td><td id="stat-sco0">0</td><td id="stat-sco1">0</td></tr>
-      <tr><td class="label">Settebello</td><td id="stat-set0">0</td><td id="stat-set1">0</td></tr>
-      <tr><td class="label">Carte</td><td id="stat-car0">0</td><td id="stat-car1">0</td></tr>
-      <tr><td class="label">Denari</td><td id="stat-den0">0</td><td id="stat-den1">0</td></tr>
-      <tr><td class="label">Primiera</td><td id="stat-pri0">0</td><td id="stat-pri1">0</td></tr>
-      <tr class="primiera-row">
-        <td class="label" style="font-size:0.85em;color:#888;">↳ carte</td>
-        <td><div class="mini-cards" id="mini0"></div></td>
-        <td><div class="mini-cards" id="mini1"></div></td>
-      </tr>
-      <tr class="total-row"><td class="label">Totale</td><td id="stat-tot0">0</td><td id="stat-tot1">0</td></tr>
-    </table>
-  </div>
+  <!-- STATISTICHE COMPATTE -->
+  <div class="stats" id="stats"></div>
 
   <!-- BANNER -->
   <div class="mano-banner" id="banner"></div>
@@ -315,12 +270,22 @@
   const SUITS = ['DENARI', 'COPPE', 'SPADE', 'BASTONI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_stato_v2';
+  const STORAGE_KEY = 'scopa_stato_v3';
 
   const PRIMIERA_VALUE = {
     1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
     8: 10, 9: 10, 10: 10
   };
+
+  // Definizione delle voci statistiche (solo nostre)
+  const STAT_ITEMS = [
+    { key: 'precedenti', icon: '📜', label: 'Precedenti' },
+    { key: 'scope',      icon: '🧹', label: 'Scope'      },
+    { key: 'settebello', icon: '7',  label: 'Settebello', gold: true },
+    { key: 'carte',      icon: '🃏', label: 'Carte'      },
+    { key: 'denari',     icon: '🪙', label: 'Denari'     },
+    { key: 'primiera',   icon: '🎯', label: 'Primiera'   }
+  ];
 
   // ═══════════════════════════════════════════════
   //  STATO
@@ -328,7 +293,7 @@
   let state = {
     activePlayer: 0,
     selected: [],
-    manoCorrente: 0,           // numero della mano (1, 2, 3...)
+    manoCorrente: 0,
     taken: [
       { carte: [], scope: 0, precedenti: 0 },
       { carte: [], scope: 0, precedenti: 0 }
@@ -385,6 +350,34 @@
   grid.appendChild(fragment);
 
   const allCards = () => document.querySelectorAll('.card');
+
+  // ═══════════════════════════════════════════════
+  //  COSTRUZIONE STATISTICHE
+  // ═══════════════════════════════════════════════
+  function buildStats() {
+    const container = document.getElementById('stats');
+    container.innerHTML = '';
+    STAT_ITEMS.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'stat zero';
+      div.id = 'stat-' + item.key;
+      div.title = item.label;
+
+      const icon = document.createElement('div');
+      icon.className = 'icon' + (item.gold ? ' gold-seven' : '');
+      icon.textContent = item.icon;
+
+      const val = document.createElement('div');
+      val.className = 'value';
+      val.id = 'val-' + item.key;
+      val.textContent = '0';
+
+      div.appendChild(icon);
+      div.appendChild(val);
+      container.appendChild(div);
+    });
+  }
+  buildStats();
 
   // ═══════════════════════════════════════════════
   //  SELEZIONE CARTE
@@ -477,99 +470,14 @@
     };
   }
 
-  function ricalcolaPunteggi() {
+  function calcolaPuntiMano() {
     const stats = [calcolaStatsMano(0), calcolaStatsMano(1)];
 
     // Denari: +1 a chi ha più ori
     if (stats[0].denari !== stats[1].denari) {
-      const winner = stats[0].denari > stats[1].denari ? 0 : 1;
-      stats[winner].denariPoint = 1;
-    }
-
-    // Carte: +1 a chi ha più di 20 carte
-    if (stats[0].numCarte >= 21) stats[0].cartePoint = 1;
-    if (stats[1].numCarte >= 21) stats[1].cartePoint = 1;
-
-    // Primiera
-    const p0Ok = stats[0].semiCompleti === 4;
-    const p1Ok = stats[1].semiCompleti === 4;
-    if (p0Ok && p1Ok) {
-      if (stats[0].primiera > stats[1].primiera) stats[0].primieraPoint = 1;
-      else if (stats[1].primiera > stats[0].primiera) stats[1].primieraPoint = 1;
-    } else if (p0Ok && !p1Ok) {
-      stats[0].primieraPoint = 1;
-    } else if (p1Ok && !p0Ok) {
-      stats[1].primieraPoint = 1;
-    }
-
-    // Settebello
-    [0,1].forEach(p => {
-      if (stats[p].hasSettebello) stats[p].settebelloPoint = 1;
-    });
-
-    // Aggiorna DOM
-    [0,1].forEach(p => {
-      const s = stats[p];
-      const sco = state.taken[p].scope;
-      const pre = state.taken[p].precedenti;
-
-      document.getElementById(`stat-pre${p}`).textContent = pre;
-      document.getElementById(`stat-sco${p}`).textContent = sco;
-      document.getElementById(`stat-set${p}`).textContent = s.settebelloPoint;
-      document.getElementById(`stat-car${p}`).textContent = s.cartePoint;
-      document.getElementById(`stat-den${p}`).textContent = s.denariPoint;
-      document.getElementById(`stat-pri${p}`).textContent = s.primieraPoint;
-
-      const totale = pre + sco + s.settebelloPoint + s.cartePoint
-                   + s.denariPoint + s.primieraPoint;
-      document.getElementById(`stat-tot${p}`).textContent = totale;
-      document.getElementById(`score${p}`).textContent = totale;
-
-      renderMiniCarte(p, s.bestPerSuit);
-    });
-  }
-
-  function renderMiniCarte(player, bestPerSuit) {
-    const container = document.getElementById(`mini${player}`);
-    container.innerHTML = '';
-    for (let col = 0; col < 4; col++) {
-      const b = bestPerSuit[col];
-      if (b) {
-        const img = document.createElement('img');
-        img.src = `${b.row} ${SUITS[col]}.jpg`;
-        img.title = `${b.row} di ${SUITS[col]} (${b.value})`;
-        img.onerror = function() {
-          const d = document.createElement('div');
-          d.className = 'empty';
-          d.textContent = b.row;
-          d.style.fontSize = '0.5rem';
-          d.style.display = 'flex';
-          d.style.alignItems = 'center';
-          d.style.justifyContent = 'center';
-          d.style.color = '#fff';
-          this.replaceWith(d);
-        };
-        container.appendChild(img);
-      } else {
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        container.appendChild(empty);
-      }
-    }
-  }
-
-  // ═══════════════════════════════════════════════
-  //  FINE MANO — sposta tutto in Precedenti e azzera
-  // ═══════════════════════════════════════════════
-  function fineMano() {
-    // Calcola totale mano corrente per ciascun giocatore
-    const stats = [calcolaStatsMano(0), calcolaStatsMano(1)];
-
-    // Denari
-    if (stats[0].denari !== stats[1].denari) {
       stats[stats[0].denari > stats[1].denari ? 0 : 1].denariPoint = 1;
     }
-    // Carte
+    // Carte: +1 a chi supera 20 carte
     if (stats[0].numCarte >= 21) stats[0].cartePoint = 1;
     if (stats[1].numCarte >= 21) stats[1].cartePoint = 1;
     // Primiera
@@ -578,20 +486,66 @@
     if (p0Ok && p1Ok) {
       if (stats[0].primiera > stats[1].primiera) stats[0].primieraPoint = 1;
       else if (stats[1].primiera > stats[0].primiera) stats[1].primieraPoint = 1;
-    } else if (p0Ok) stats[0].primieraPoint = 1;
-    else if (p1Ok) stats[1].primieraPoint = 1;
+    } else if (p0Ok && !p1Ok) stats[0].primieraPoint = 1;
+    else if (p1Ok && !p0Ok) stats[1].primieraPoint = 1;
     // Settebello
     if (stats[0].hasSettebello) stats[0].settebelloPoint = 1;
     if (stats[1].hasSettebello) stats[1].settebelloPoint = 1;
 
-    // Somma punti mano ai precedenti
+    return stats;
+  }
+
+  function ricalcolaPunteggi() {
+    const stats = calcolaPuntiMano();
+
+    // Mostra solo i punti del giocatore 0 (IO) nella barra compatta
+    const valori = {
+      precedenti: state.taken[0].precedenti,
+      scope:      state.taken[0].scope,
+      settebello: stats[0].settebelloPoint,
+      carte:      stats[0].cartePoint,
+      denari:     stats[0].denariPoint,
+      primiera:   stats[0].primieraPoint
+    };
+
+    let totale = 0;
+    STAT_ITEMS.forEach(item => {
+      const v = valori[item.key];
+      totale += v;
+      const el = document.getElementById('val-' + item.key);
+      const wrap = document.getElementById('stat-' + item.key);
+      if (el) el.textContent = v;
+      if (wrap) wrap.classList.toggle('zero', v === 0);
+    });
+
+    // Punteggi nelle tessere giocatore
+    const tot0 = totale;
+    // Punteggio LORO: precedenti + scope + punti mano
+    const tot1 = state.taken[1].precedenti
+               + state.taken[1].scope
+               + stats[1].settebelloPoint
+               + stats[1].cartePoint
+               + stats[1].denariPoint
+               + stats[1].primieraPoint;
+
+    document.getElementById('score0').textContent = tot0;
+    document.getElementById('score1').textContent = tot1;
+
+    return { stats, tot0, tot1 };
+  }
+
+  // ═══════════════════════════════════════════════
+  //  FINE MANO
+  // ═══════════════════════════════════════════════
+  function fineMano() {
+    const stats = calcolaPuntiMano();
+
     [0,1].forEach(p => {
       const s = stats[p];
       const puntiMano = state.taken[p].scope
                       + s.settebelloPoint + s.cartePoint
                       + s.denariPoint + s.primieraPoint;
       state.taken[p].precedenti += puntiMano;
-      // Azzera mazzo e scope per la prossima mano
       state.taken[p].carte = [];
       state.taken[p].scope = 0;
     });
@@ -600,15 +554,17 @@
     state.selected = [];
 
     // Ripristina griglia
-    allCards().forEach(el => {
-      el.classList.remove('taken', 'selected');
-    });
-    updateActions();
-
-    // Ricostruisci immagine se era stata sostituita col fallback testuale
     allCards().forEach((el, i) => {
+      el.classList.remove('taken', 'selected');
+      // Se era stato sostituito da fallback testuale, ricrea l'img
       if (!el.querySelector('img')) {
         el.innerHTML = '';
+        el.style.background = '';
+        el.style.color = '';
+        el.style.display = '';
+        el.style.alignItems = '';
+        el.style.justifyContent = '';
+        el.style.whiteSpace = '';
         const img = document.createElement('img');
         img.src = cardFileName(i);
         img.alt = '';
@@ -625,19 +581,13 @@
           el.style.whiteSpace = 'pre-line';
         };
         el.appendChild(img);
-        el.style.background = '';
-        el.style.color = '';
-        el.style.display = '';
-        el.style.alignItems = '';
-        el.style.justifyContent = '';
-        el.textContent = '';
-        el.style.whiteSpace = '';
       }
     });
 
+    updateActions();
     ricalcolaPunteggi();
     saveState();
-    showBanner(`Mano ${state.manoCorrente - 1} conclusa!`);
+    showBanner(`Mano ${state.manoCorrente} conclusa!`);
   }
 
   function showBanner(text) {
