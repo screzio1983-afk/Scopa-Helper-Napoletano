@@ -20,36 +20,90 @@
     display: flex;
     flex-direction: column;
     padding: 4px;
-    gap: 4px;
+    gap: 3px;
     user-select: none;
     -webkit-user-select: none;
   }
 
-  /* ── HEADER (avversario) ── */
+  /* ── HEADER COMPATTO (avversario) ── */
   .header {
     flex: 0 0 auto;
     background: #2a1a1a;
     border: 1.5px solid #7f1d1d;
-    border-radius: 8px;
-    padding: 4px 6px;
+    border-radius: 6px;
+    padding: 3px 8px;
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .header .title-row {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.72rem;
+    line-height: 1;
   }
 
-  .header .title {
-    font-size: 0.68rem;
-    color: #f87171;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  .header .stats {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex: 1 1 auto;
+    justify-content: space-around;
   }
+
+  /* ── FOOTER COMPATTO (noi) ── */
+  .footer {
+    flex: 0 0 auto;
+    background: #1a2a1a;
+    border: 1.5px solid #166534;
+    border-radius: 6px;
+    padding: 3px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.72rem;
+    line-height: 1;
+  }
+
+  .footer .stats {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex: 1 1 auto;
+    justify-content: space-around;
+  }
+
+  /* Stat singola: etichetta + numero inline */
+  .stat {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    white-space: nowrap;
+  }
+
+  .stat .label {
+    font-size: 0.62rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .stat .value {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #fbbf24;
+  }
+
+  .stat.zero .value { color: #555; }
+
+  /* Totale: più evidente */
+  .stat.total .value {
+    font-size: 1.05rem;
+    color: #fbbf24;
+    text-shadow: 0 0 6px rgba(251,191,36,0.5);
+  }
+
+  /* Primiera: viola */
+  .stat.primiera .value { color: #a78bfa; }
+  .stat.primiera.zero .value { color: #555; }
 
   /* ── GRIGLIA CARTE ── */
   .grid {
@@ -122,97 +176,40 @@
     box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 0 18px rgba(239,68,68,1);
   }
 
-  /* ── FOOTER (noi) ── */
-  .footer {
-    flex: 0 0 auto;
-    background: #1a2a1a;
-    border: 1.5px solid #166534;
-    border-radius: 8px;
-    padding: 4px 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .footer .title-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .footer .title {
-    font-size: 0.68rem;
-    color: #4ade80;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  /* ── STATS (senza icone) ── */
-  .stats {
-    display: grid;
-    grid-template-columns: 1.1fr 1fr 1fr 1.4fr;
-    gap: 4px;
-    align-items: center;
-  }
-
-  .stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    min-width: 0;
-  }
-
-  .stat .value {
-    font-size: clamp(0.75rem, 3vw, 1rem);
-    font-weight: bold;
-    line-height: 1;
-    color: #fbbf24;
-  }
-
-  .stat.zero .value { color: #555; }
-
-  .stat .label {
-    font-size: 0.5rem;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-top: 1px;
-  }
-
-  /* Totale: più grande e dorato */
-  .stat.total {
-    border-radius: 6px;
-    padding: 2px 4px;
-  }
-
-  .stat.total .value {
-    font-size: clamp(1.1rem, 4.5vw, 1.5rem);
-  }
-
-  .header .stat.total { background: rgba(251,191,36,0.1); }
-  .footer .stat.total { background: rgba(251,191,36,0.1); }
-
-  /* Primiera: numero viola */
-  .stat.primiera .value { color: #a78bfa; }
-  .stat.primiera.zero .value { color: #555; }
-
-  /* ── RIGHE PRIMIERA (centrate) ── */
+  /* ── RIGHE PRIMIERA ── */
   .primiera-row {
     flex: 0 0 auto;
     display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 0;
+  }
+
+  .primiera-row .side-label {
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex: 0 0 auto;
+    min-width: 38px;
+  }
+
+  #primiera-them .side-label { color: #f87171; }
+  #primiera-us .side-label { color: #4ade80; }
+
+  /* Le 4 carte centrate nel resto dello spazio */
+  .primiera-cards {
+    flex: 1 1 auto;
+    display: flex;
     justify-content: center;
     align-items: center;
-    gap: 3px;
-    padding: 2px 0;
+    gap: 4px;
   }
 
   .primiera-cell {
     aspect-ratio: 2 / 3;
-    max-height: 42px;
-    max-width: 28px;
+    max-height: 40px;
+    max-width: 26px;
     width: 100%;
     border-radius: 3px;
     border: 1px solid #3a3a4a;
@@ -251,18 +248,10 @@
     box-shadow: 0 0 6px rgba(34,197,94,0.9);
   }
 
-  /* Primiera LORO (in alto): bordo rosso tenue */
-  #primiera-them .primiera-cell:not(.empty) {
-    border-color: #7f1d1d;
-  }
-  #primiera-them .primiera-cell.won {
-    border-color: #22c55e;
-  }
+  #primiera-them .primiera-cell:not(.empty) { border-color: #7f1d1d; }
+  #primiera-them .primiera-cell.won { border-color: #22c55e; }
 
-  /* Primiera NOI (in basso): bordo verde tenue */
-  #primiera-us .primiera-cell:not(.empty) {
-    border-color: #166534;
-  }
+  #primiera-us .primiera-cell:not(.empty) { border-color: #166534; }
 
   /* ── RESET ── */
   .reset-bar {
@@ -276,8 +265,8 @@
     border: none;
     border-radius: 6px;
     font-weight: bold;
-    font-size: 0.68rem;
-    padding: 4px 10px;
+    font-size: 0.65rem;
+    padding: 3px 10px;
     cursor: pointer;
     white-space: nowrap;
   }
@@ -309,27 +298,27 @@
 
   <!-- HEADER: LORO -->
   <div class="header">
-    <div class="title-row">
-      <span class="title">▼ LORO</span>
-    </div>
     <div class="stats" id="stats-them"></div>
   </div>
 
-  <!-- PRIMIERA LORO (in alto, centrata) -->
-  <div class="primiera-row" id="primiera-them"></div>
+  <!-- PRIMIERA LORO (in alto) -->
+  <div class="primiera-row" id="primiera-them">
+    <span class="side-label">Loro</span>
+    <div class="primiera-cards" id="primiera-them-cards"></div>
+  </div>
 
   <!-- GRIGLIA -->
   <div class="grid" id="grid"></div>
 
-  <!-- PRIMIERA NOI (in basso, centrata) -->
-  <div class="primiera-row" id="primiera-us"></div>
+  <!-- PRIMIERA NOI (in basso) -->
+  <div class="primiera-row" id="primiera-us">
+    <span class="side-label">Noi</span>
+    <div class="primiera-cards" id="primiera-us-cards"></div>
+  </div>
 
   <!-- FOOTER: NOI -->
   <div class="footer">
     <div class="stats" id="stats-us"></div>
-    <div class="title-row">
-      <span class="title">▲ NOI</span>
-    </div>
   </div>
 
   <!-- RESET -->
@@ -353,10 +342,15 @@
   const SUITS_ORDER = ['SPADE', 'COPPE', 'BASTONI', 'DENARI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_mono_v9';
+  const STORAGE_KEY = 'scopa_mono_v10';
   const DRAG_THRESHOLD = 12;
   const MAX_ROW = 7;
   const FLY_DURATION = 350;
+
+  // Soglie per i punti nel totale
+  const SOGLIA_ORI = 6;       // ≥ 6 ori → +1
+  const SOGLIA_CARTE = 21;    // ≥ 21 carte → +1
+  const SOGLIA_PRIMIERA = 84; // 4 sette (21×4) → +1
 
   const PRIMIERA_VALUE = {
     1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
@@ -563,37 +557,37 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  COSTRUZIONE STATS (senza icone)
+  //  COSTRUZIONE STATS (compatte, su una riga)
   // ═══════════════════════════════════════════════
   function buildStatsFor(containerId, chi) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
 
     const items = [
-      { key: 'total',    label: 'Totale',  total: true },
-      { key: 'denari',   label: 'Ori'      },
-      { key: 'carte',    label: 'Carte'    },
-      { key: 'primiera', label: 'Primiera', primiera: true }
+      { key: 'total',    label: 'Tot'    },
+      { key: 'denari',   label: 'Ori'    },
+      { key: 'carte',    label: 'Carte'  },
+      { key: 'primiera', label: 'Prim', primiera: true }
     ];
 
     items.forEach(item => {
       const div = document.createElement('div');
       div.className = 'stat zero';
-      if (item.total) div.classList.add('total');
+      if (item.key === 'total') div.classList.add('total');
       if (item.primiera) div.classList.add('primiera');
       div.dataset.player = chi;
       div.dataset.key = item.key;
 
-      const val = document.createElement('div');
-      val.className = 'value';
-      val.textContent = '0';
-
-      const lab = document.createElement('div');
+      const lab = document.createElement('span');
       lab.className = 'label';
       lab.textContent = item.label;
 
-      div.appendChild(val);
+      const val = document.createElement('span');
+      val.className = 'value';
+      val.textContent = '0';
+
       div.appendChild(lab);
+      div.appendChild(val);
       container.appendChild(div);
     });
   }
@@ -618,8 +612,8 @@
     });
   }
 
-  buildPrimieraRow('primiera-them', 3);
-  buildPrimieraRow('primiera-us', 2);
+  buildPrimieraRow('primiera-them-cards', 3);
+  buildPrimieraRow('primiera-us-cards', 2);
 
   // ═══════════════════════════════════════════════
   //  CALCOLO STATS
@@ -645,83 +639,59 @@
       }
     });
 
-    const semiCompleti = Object.values(bestPerSuit).filter(b => b !== null).length;
     const primieraValore = Object.values(bestPerSuit).reduce(
       (sum, b) => sum + (b ? b.value : 0), 0
     );
 
-    return { denari, numCarte, hasSettebello, bestPerSuit, semiCompleti, primieraValore };
-  }
-
-  function calcolaVincitori(statsUs, statsThem) {
-    let denariVinti = null;
-    if (statsUs.denari !== statsThem.denari) {
-      denariVinti = statsUs.denari > statsThem.denari ? 'us' : 'them';
-    }
-
-    let carteVinte = null;
-    const c0 = statsUs.numCarte >= 21;
-    const c1 = statsThem.numCarte >= 21;
-    if (c0 && !c1) carteVinte = 'us';
-    else if (c1 && !c0) carteVinte = 'them';
-
-    let primieraVinta = null;
-    const p0Ok = statsUs.semiCompleti === 4;
-    const p1Ok = statsThem.semiCompleti === 4;
-    if (p0Ok && p1Ok) {
-      if (statsUs.primieraValore > statsThem.primieraValore) primieraVinta = 'us';
-      else if (statsThem.primieraValore > statsUs.primieraValore) primieraVinta = 'them';
-    } else if (p0Ok) {
-      primieraVinta = 'us';
-    } else if (p1Ok) {
-      primieraVinta = 'them';
-    }
-
-    return { denariVinti, carteVinte, primieraVinta };
+    return { denari, numCarte, hasSettebello, bestPerSuit, primieraValore };
   }
 
   function ricalcolaPunteggi() {
     const statsUs = calcolaStats(2);
     const statsThem = calcolaStats(3);
-    const vinc = calcolaVincitori(statsUs, statsThem);
 
-    // ── Header LORO ──
+    // ── LORO ──
     const themContainer = document.getElementById('stats-them');
-    const totThem = (statsThem.hasSettebello ? 1 : 0)
-                  + (vinc.carteVinte === 'them' ? 1 : 0)
-                  + (vinc.denariVinti === 'them' ? 1 : 0)
-                  + (vinc.primieraVinta === 'them' ? 1 : 0);
-    themContainer.querySelector('[data-key="total"] .value').textContent = totThem;
-    themContainer.querySelector('[data-key="total"]').classList.toggle('zero', totThem === 0);
+    const puntiThem =
+      (statsThem.hasSettebello ? 1 : 0) +
+      (statsThem.denari >= SOGLIA_ORI ? 1 : 0) +
+      (statsThem.numCarte >= SOGLIA_CARTE ? 1 : 0) +
+      (statsThem.primieraValore >= SOGLIA_PRIMIERA ? 1 : 0);
+
+    themContainer.querySelector('[data-key="total"] .value').textContent = puntiThem;
+    themContainer.querySelector('[data-key="total"]').classList.toggle('zero', puntiThem === 0);
     themContainer.querySelector('[data-key="denari"] .value').textContent = statsThem.denari;
     themContainer.querySelector('[data-key="denari"]').classList.toggle('zero', statsThem.denari === 0);
     themContainer.querySelector('[data-key="carte"] .value').textContent = statsThem.numCarte;
     themContainer.querySelector('[data-key="carte"]').classList.toggle('zero', statsThem.numCarte === 0);
 
-    let priThemDisplay = (vinc.primieraVinta === 'them') ? 1 : statsThem.primieraValore;
+    // Primiera: mostra "1" se ha raggiunto la soglia, altrimenti valore parziale
+    const priThemDisplay = (statsThem.primieraValore >= SOGLIA_PRIMIERA) ? 1 : statsThem.primieraValore;
     themContainer.querySelector('[data-key="primiera"] .value').textContent = priThemDisplay;
     themContainer.querySelector('[data-key="primiera"]').classList.toggle('zero', priThemDisplay === 0);
 
-    // ── Footer NOI ──
+    // ── NOI ──
     const usContainer = document.getElementById('stats-us');
-    const totUs = (statsUs.hasSettebello ? 1 : 0)
-                + (vinc.carteVinte === 'us' ? 1 : 0)
-                + (vinc.denariVinti === 'us' ? 1 : 0)
-                + (vinc.primieraVinta === 'us' ? 1 : 0);
-    usContainer.querySelector('[data-key="total"] .value').textContent = totUs;
-    usContainer.querySelector('[data-key="total"]').classList.toggle('zero', totUs === 0);
+    const puntiUs =
+      (statsUs.hasSettebello ? 1 : 0) +
+      (statsUs.denari >= SOGLIA_ORI ? 1 : 0) +
+      (statsUs.numCarte >= SOGLIA_CARTE ? 1 : 0) +
+      (statsUs.primieraValore >= SOGLIA_PRIMIERA ? 1 : 0);
+
+    usContainer.querySelector('[data-key="total"] .value').textContent = puntiUs;
+    usContainer.querySelector('[data-key="total"]').classList.toggle('zero', puntiUs === 0);
     usContainer.querySelector('[data-key="denari"] .value').textContent = statsUs.denari;
     usContainer.querySelector('[data-key="denari"]').classList.toggle('zero', statsUs.denari === 0);
     usContainer.querySelector('[data-key="carte"] .value').textContent = statsUs.numCarte;
     usContainer.querySelector('[data-key="carte"]').classList.toggle('zero', statsUs.numCarte === 0);
 
-    let priUsDisplay = (vinc.primieraVinta === 'us') ? 1 : statsUs.primieraValore;
+    const priUsDisplay = (statsUs.primieraValore >= SOGLIA_PRIMIERA) ? 1 : statsUs.primieraValore;
     usContainer.querySelector('[data-key="primiera"] .value').textContent = priUsDisplay;
     usContainer.querySelector('[data-key="primiera"]').classList.toggle('zero', priUsDisplay === 0);
 
     // ── Righe primiera ──
-    renderPrimieraRow('primiera-them', statsThem);
-    renderPrimieraRow('primiera-us', statsUs);
+    renderPrimieraRow('primiera-them-cards', statsThem);
+    renderPrimieraRow('primiera-us-cards', statsUs);
   }
 
   function renderPrimieraRow(containerId, stats) {
@@ -783,12 +753,12 @@
   //  HINT
   // ═══════════════════════════════════════════════
   function showHintOnce() {
-    if (localStorage.getItem('scopa_mono_hint_v9')) return;
+    if (localStorage.getItem('scopa_mono_hint_v10')) return;
     const hint = document.getElementById('hint');
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.remove('show');
-      localStorage.setItem('scopa_mono_hint_v9', '1');
+      localStorage.setItem('scopa_mono_hint_v10', '1');
     }, 6000);
   }
 
