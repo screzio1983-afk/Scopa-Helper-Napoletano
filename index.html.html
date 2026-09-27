@@ -25,59 +25,32 @@
     user-select: none;
   }
 
-  /* ── BARRA SUPERIORE ── */
-  .topbar {
-    display: flex;
-    gap: 4px;
+  /* ── HEADER (avversario) ── */
+  .header {
     flex: 0 0 auto;
-    align-items: stretch;
+    background: #2a1a1a;
+    border: 1.5px solid #7f1d1d;
+    border-radius: 8px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
   }
 
-  .total-box {
-    flex: 1 1 0;
-    background: #2a2a3e;
-    border: 2px solid #fbbf24;
-    border-radius: 8px;
-    padding: 4px 10px;
+  .header .title-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-width: 0;
+    padding: 0 4px;
   }
 
-  .total-box .label {
-    font-size: clamp(0.7rem, 3vw, 0.9rem);
-    color: #aaa;
+  .header .title {
+    font-size: 0.7rem;
+    color: #f87171;
     font-weight: bold;
-    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
-
-  .total-box .value {
-    font-size: clamp(1.3rem, 6vw, 1.8rem);
-    color: #fbbf24;
-    font-weight: bold;
-    line-height: 1;
-  }
-
-  .top-buttons {
-    display: flex;
-    gap: 3px;
-    flex: 0 0 auto;
-    flex-direction: column;
-  }
-
-  .top-buttons button {
-    border: none;
-    border-radius: 6px;
-    font-weight: bold;
-    font-size: 0.68rem;
-    color: #fff;
-    cursor: pointer;
-    padding: 4px 10px;
-    white-space: nowrap;
-  }
-
-  #btnReset { background: #ef4444; }
 
   /* ── GRIGLIA CARTE ── */
   .grid {
@@ -100,9 +73,8 @@
     min-height: 0;
     transition: transform 0.1s ease, box-shadow 0.15s ease,
                 background 0.15s ease, border-color 0.15s ease;
+    touch-action: none;
   }
-
-  .card:active { transform: scale(0.93); }
 
   .card img {
     width: 100%;
@@ -114,88 +86,83 @@
     transition: opacity 0.15s ease, filter 0.15s ease;
   }
 
-  /* Stato 0: carta nuova (default) */
-
-  /* Stato 1: carta uscita */
+  /* Carta uscita: annerita MA ancora leggibile */
   .card.discarded {
-    background: #15151f;
-    border-color: #15151f;
+    background: #3a3a4a;
+    border-color: #3a3a4a;
   }
 
   .card.discarded img {
-    opacity: 0.12;
-    filter: grayscale(1);
+    opacity: 0.55;
+    filter: brightness(0.5) grayscale(0.4);
   }
 
-  /* Stato 2: carta presa (nel tuo mazzo) */
-  .card.taken {
-    background: #15151f;
+  /* Carta presa da NOI (verde) */
+  .card.taken-us {
+    background: #14532d;
     border-color: #22c55e;
-    box-shadow: inset 0 0 10px rgba(34,197,94,0.5);
+    box-shadow: inset 0 0 10px rgba(34,197,94,0.6);
   }
 
-  .card.taken img { opacity: 0; }
+  .card.taken-us img { opacity: 0; }
 
-  /* Stato 3: carta scopa (presa + scopa) */
-  .card.scopa {
-    background: #15151f;
-    border-color: #f59e0b;
-    box-shadow: inset 0 0 12px rgba(245,158,11,0.7);
+  /* Carta presa dall'AVVERSARIO (rosso) */
+  .card.taken-them {
+    background: #4c1d1d;
+    border-color: #ef4444;
+    box-shadow: inset 0 0 10px rgba(239,68,68,0.6);
   }
 
-  .card.scopa img { opacity: 0; }
+  .card.taken-them img { opacity: 0; }
 
-  /* Piccolo badge scopa */
-  .card.scopa::after {
-    content: '🧹';
-    position: absolute;
-    bottom: 1px;
-    right: 1px;
-    font-size: 0.7rem;
-    line-height: 1;
+  /* Feedback drag */
+  .card.dragging-us {
+    border-color: #22c55e;
+    box-shadow: 0 0 14px rgba(34,197,94,1);
+    z-index: 3;
+    transform: scale(0.96);
   }
 
-  /* ── AZIONI ── */
-  .actions {
-    display: flex;
-    gap: 4px;
+  .card.dragging-them {
+    border-color: #ef4444;
+    box-shadow: 0 0 14px rgba(239,68,68,1);
+    z-index: 3;
+    transform: scale(0.96);
+  }
+
+  /* ── FOOTER (noi) ── */
+  .footer {
     flex: 0 0 auto;
-    height: 42px;
-  }
-
-  .actions button {
-    border: none;
+    background: #1a2a1a;
+    border: 1.5px solid #166534;
     border-radius: 8px;
-    font-weight: bold;
-    font-size: clamp(0.72rem, 3vw, 0.95rem);
-    color: #fff;
-    cursor: pointer;
-    transition: transform 0.1s ease, filter 0.15s ease, opacity 0.15s ease;
+    padding: 4px;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    width: 100%;
-  }
-
-  .actions button:active { transform: scale(0.96); filter: brightness(1.2); }
-
-  #btnUndo { background: #475569; }
-
-  #btnUndo:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-  }
-
-  /* ── STATISTICHE ── */
-  .stats {
-    flex: 0 0 auto;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    flex-direction: column;
     gap: 3px;
-    background: #2a2a3e;
-    border-radius: 8px;
-    padding: 4px 5px;
+  }
+
+  .footer .title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+  }
+
+  .footer .title {
+    font-size: 0.7rem;
+    color: #4ade80;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── STATS ── */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2.2fr;
+    gap: 3px;
+    align-items: center;
   }
 
   .stat {
@@ -205,16 +172,15 @@
     justify-content: center;
     gap: 1px;
     min-width: 0;
-    position: relative;
   }
 
   .stat .icon {
-    font-size: clamp(0.85rem, 3.2vw, 1.1rem);
+    font-size: clamp(0.8rem, 3vw, 1rem);
     line-height: 1;
   }
 
   .stat .value {
-    font-size: clamp(0.75rem, 3vw, 1rem);
+    font-size: clamp(0.7rem, 2.8vw, 0.95rem);
     font-weight: bold;
     line-height: 1;
     color: #fbbf24;
@@ -223,54 +189,105 @@
   .stat.zero .value { color: #555; }
 
   .stat .label {
-    font-size: 0.55rem;
+    font-size: 0.5rem;
     color: #888;
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
 
-  /* ── BANNER ── */
-  .mano-banner {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    background: #f59e0b;
-    color: #fff;
-    padding: 14px 22px;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 1rem;
-    text-align: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.25s ease;
-    z-index: 100;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  /* Primiera: 4 mini-icone dei semi con valore */
+  .primiera-box {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 5px;
+    padding: 2px;
   }
 
-  .mano-banner.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+  .primiera-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0px;
+    min-width: 0;
+    padding: 2px 0;
+    border-radius: 4px;
+    transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 1px solid transparent;
+  }
+
+  .primiera-cell .suit-icon {
+    font-size: clamp(0.65rem, 2.4vw, 0.85rem);
+    line-height: 1;
+  }
+
+  .primiera-cell .card-val {
+    font-size: clamp(0.65rem, 2.6vw, 0.9rem);
+    font-weight: bold;
+    line-height: 1;
+    color: #fbbf24;
+    min-height: 0.9em;
+  }
+
+  .primiera-cell.empty .card-val { color: #444; }
+
+  /* Cella "vinta matematicamente" (hai il 7 di quel seme) */
+  .primiera-cell.won {
+    background: #14532d;
+    border-color: #22c55e;
+    box-shadow: 0 0 8px rgba(34,197,94,0.7);
+  }
+
+  .primiera-cell.won .card-val {
+    color: #22c55e;
+    text-shadow: 0 0 6px rgba(34,197,94,0.9);
+  }
+
+  /* Stessa cosa ma per l'avversario: resta verde, è universale */
+  .header .primiera-cell.won {
+    background: #14532d;
+    border-color: #22c55e;
+    box-shadow: 0 0 8px rgba(34,197,94,0.7);
+  }
+
+  /* ── RESET ── */
+  .reset-bar {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .reset-bar button {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 0.68rem;
+    padding: 5px 12px;
+    cursor: pointer;
+    white-space: nowrap;
   }
 
   /* ── HINT ── */
   .hint {
     position: fixed;
-    bottom: 100px;
+    bottom: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.9);
+    transform: translate(-50%, 50%);
+    background: rgba(0,0,0,0.92);
     color: #fff;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 0.8rem;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 0.82rem;
     text-align: center;
     z-index: 90;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s;
-    line-height: 1.6;
+    line-height: 1.7;
     border: 1px solid #444;
   }
 
@@ -281,36 +298,35 @@
 </head>
 <body>
 
-  <!-- BARRA SUPERIORE -->
-  <div class="topbar">
-    <div class="total-box">
-      <span class="label">TOTALE</span>
-      <span class="value" id="total">0</span>
+  <!-- ═══ HEADER: AVVERSARIO ═══ -->
+  <div class="header">
+    <div class="title-row">
+      <span class="title">▼ LORO</span>
     </div>
-    <div class="top-buttons">
-      <button id="btnReset" onclick="resetAll()">RESET</button>
-    </div>
+    <div class="stats" id="stats-them"></div>
   </div>
 
-  <!-- GRIGLIA -->
+  <!-- ═══ GRIGLIA ═══ -->
   <div class="grid" id="grid"></div>
 
-  <!-- AZIONI -->
-  <div class="actions">
-    <button id="btnUndo" onclick="undo()" disabled>↶ ANNULLA</button>
+  <!-- ═══ FOOTER: NOI ═══ -->
+  <div class="footer">
+    <div class="stats" id="stats-us"></div>
+    <div class="title-row">
+      <span class="title">▲ NOI</span>
+    </div>
   </div>
 
-  <!-- STATISTICHE -->
-  <div class="stats" id="stats"></div>
-
-  <!-- BANNER -->
-  <div class="mano-banner" id="banner"></div>
+  <!-- ═══ RESET ═══ -->
+  <div class="reset-bar">
+    <button onclick="resetAll()">RESET</button>
+  </div>
 
   <!-- HINT -->
   <div class="hint" id="hint">
-    <b>1° tocco</b> = carta uscita<br>
-    <b>2° tocco</b> = carta presa<br>
-    <b>3° tocco</b> = scopa
+    <b>Tap</b> = carta uscita<br>
+    <b>Trascina giù ↓</b> = presa nostra<br>
+    <b>Trascina su ↑</b> = presa loro
   </div>
 
 <script>
@@ -318,30 +334,28 @@
   //  CONFIGURAZIONE
   // ═══════════════════════════════════════════════
   const SUITS = ['DENARI', 'COPPE', 'SPADE', 'BASTONI'];
+  const SUIT_ICONS = { DENARI: '🪙', COPPE: '🏆', SPADE: '⚔️', BASTONI: '🪵' };
+  const SUITS_ORDER = ['SPADE', 'COPPE', 'BASTONI', 'DENARI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_mono_v3';
+  const STORAGE_KEY = 'scopa_mono_v5';
+  const DRAG_THRESHOLD = 25;
 
   const PRIMIERA_VALUE = {
     1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
     8: 10, 9: 10, 10: 10
   };
 
-  // Barra statistiche (3 icone): Ori, Primiera, Carte
-  const STAT_ITEMS = [
-    { key: 'denari',   icon: '🪙', label: 'Ori'      },
-    { key: 'primiera', icon: '🎯', label: 'Primiera' },
-    { key: 'carte',    icon: '🃏', label: 'Carte'    }
-  ];
+  // Il valore massimo possibile per la primiera in un seme è il 7 (21 punti).
+  // Se un giocatore ha il 7 di un seme, quel seme è "matematicamente vinto"
+  // → nessun altro potrà mai superarlo.
+  const MAX_ROW = 7;
 
   // ═══════════════════════════════════════════════
   //  STATO
   // ═══════════════════════════════════════════════
-  // Ogni carta ha uno stato: 0 = nuova, 1 = uscita, 2 = presa, 3 = scopa
   let cardStates = new Array(ROWS * COLS).fill(0);
-
-  // Cronologia per Annulla (salva stato precedente)
-  let history = [];
+  // 0 = nuova, 1 = uscita, 2 = presa da NOI, 3 = presa da LORO
 
   // ═══════════════════════════════════════════════
   //  UTILITÀ
@@ -386,8 +400,7 @@
       };
       card.appendChild(img);
 
-      card.addEventListener('click', () => ciclaStato(index));
-      card.addEventListener('contextmenu', (e) => e.preventDefault());
+      attachHandlers(card, index);
       fragment.appendChild(card);
     }
   }
@@ -396,72 +409,105 @@
   const allCards = () => document.querySelectorAll('.card');
 
   // ═══════════════════════════════════════════════
-  //  CICLO DI STATO: nuova → uscita → presa → scopa → (torna a nuova? no)
+  //  TAP / DRAG
   // ═══════════════════════════════════════════════
-  // 1° click: 0 → 1 (uscita)
-  // 2° click: 1 → 2 (presa)
-  // 3° click: 2 → 3 (scopa)
-  // 4° click: 3 → 0 (ripristino? Sì, per correggere errori)
-  // ═══════════════════════════════════════════════
-  function ciclaStato(index) {
-    const vecchio = cardStates[index];
-    const nuovo = (vecchio + 1) % 4;
+  function attachHandlers(card, index) {
+    let startX = 0, startY = 0;
+    let tracking = false;
+    let dragMode = null;
 
-    history.push({ index, vecchio });
-    if (history.length > 200) history.shift();
+    const onPointerDown = (e) => {
+      if (cardStates[index] !== 0) return;
+      tracking = true;
+      dragMode = null;
+      startX = e.clientX;
+      startY = e.clientY;
+      card.setPointerCapture(e.pointerId);
+    };
 
-    applicaStato(index, nuovo);
-    aggiornaUndo();
-    ricalcolaPunteggi();
-    saveState();
+    const onPointerMove = (e) => {
+      if (!tracking) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const dist = Math.hypot(dx, dy);
 
-    if (navigator.vibrate) {
-      if (nuovo === 3) navigator.vibrate([30, 30, 30]); // scopa
-      else if (nuovo === 2) navigator.vibrate(30);       // presa
-      else navigator.vibrate(10);                        // uscita
-    }
+      if (dist > DRAG_THRESHOLD) {
+        const mode = dy > 0 ? 'us' : 'them';
+        if (mode !== dragMode) {
+          card.classList.remove('dragging-us', 'dragging-them');
+          dragMode = mode;
+          card.classList.add(mode === 'us' ? 'dragging-us' : 'dragging-them');
+        }
+      } else if (dragMode) {
+        card.classList.remove('dragging-us', 'dragging-them');
+        dragMode = null;
+      }
+    };
 
-    if (nuovo === 3) showBanner('🧹 Scopa!');
+    const onPointerUp = (e) => {
+      if (!tracking) return;
+      tracking = false;
+      card.classList.remove('dragging-us', 'dragging-them');
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist <= DRAG_THRESHOLD) {
+        applicaStato(index, 1);       // tap → uscita
+      } else if (dy > 0) {
+        applicaStato(index, 2);       // giù → noi
+      } else {
+        applicaStato(index, 3);       // su → loro
+      }
+
+      dragMode = null;
+      ricalcolaPunteggi();
+      saveState();
+    };
+
+    const onPointerCancel = () => {
+      tracking = false;
+      dragMode = null;
+      card.classList.remove('dragging-us', 'dragging-them');
+    };
+
+    card.addEventListener('pointerdown', onPointerDown);
+    card.addEventListener('pointermove', onPointerMove);
+    card.addEventListener('pointerup', onPointerUp);
+    card.addEventListener('pointercancel', onPointerCancel);
+    card.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
-  function applicaStato(index, nuovo) {
-    cardStates[index] = nuovo;
+  function applicaStato(index, nuovoStato) {
+    cardStates[index] = nuovoStato;
     const el = allCards()[index];
     if (!el) return;
 
-    el.classList.remove('discarded', 'taken', 'scopa');
-    if (nuovo === 1) el.classList.add('discarded');
-    else if (nuovo === 2) el.classList.add('taken');
-    else if (nuovo === 3) el.classList.add('scopa');
+    el.classList.remove('discarded', 'taken-us', 'taken-them');
+    if (nuovoStato === 1) el.classList.add('discarded');
+    else if (nuovoStato === 2) el.classList.add('taken-us');
+    else if (nuovoStato === 3) el.classList.add('taken-them');
   }
 
   // ═══════════════════════════════════════════════
-  //  UNDO
+  //  COSTRUZIONE STATS
   // ═══════════════════════════════════════════════
-  function aggiornaUndo() {
-    document.getElementById('btnUndo').disabled = history.length === 0;
-  }
-
-  function undo() {
-    if (history.length === 0) return;
-    const azione = history.pop();
-    applicaStato(azione.index, azione.vecchio);
-    aggiornaUndo();
-    ricalcolaPunteggi();
-    saveState();
-  }
-
-  // ═══════════════════════════════════════════════
-  //  STATISTICHE
-  // ═══════════════════════════════════════════════
-  function buildStats() {
-    const container = document.getElementById('stats');
+  function buildStatsFor(containerId, chi) {
+    const container = document.getElementById(containerId);
     container.innerHTML = '';
-    STAT_ITEMS.forEach(item => {
+
+    // 2 statistiche semplici: Ori, Carte
+    const items = [
+      { key: 'denari', icon: '🪙', label: 'Ori'   },
+      { key: 'carte',  icon: '🃏', label: 'Carte' }
+    ];
+
+    items.forEach(item => {
       const div = document.createElement('div');
       div.className = 'stat zero';
-      div.id = 'stat-' + item.key;
-      div.title = item.label;
+      div.dataset.player = chi;
+      div.dataset.key = item.key;
 
       const icon = document.createElement('div');
       icon.className = 'icon';
@@ -469,7 +515,6 @@
 
       const val = document.createElement('div');
       val.className = 'value';
-      val.id = 'val-' + item.key;
       val.textContent = '0';
 
       const lab = document.createElement('div');
@@ -481,105 +526,99 @@
       div.appendChild(lab);
       container.appendChild(div);
     });
+
+    // Primiera: 4 celle (una per seme)
+    const priBox = document.createElement('div');
+    priBox.className = 'primiera-box';
+    priBox.dataset.player = chi;
+    priBox.dataset.key = 'primiera';
+
+    SUITS_ORDER.forEach(suit => {
+      const cell = document.createElement('div');
+      cell.className = 'primiera-cell empty';
+      cell.dataset.suit = suit;
+      cell.dataset.player = chi;
+
+      const si = document.createElement('div');
+      si.className = 'suit-icon';
+      si.textContent = SUIT_ICONS[suit];
+
+      const cv = document.createElement('div');
+      cv.className = 'card-val';
+      cv.textContent = '—';
+
+      cell.appendChild(si);
+      cell.appendChild(cv);
+      priBox.appendChild(cell);
+    });
+
+    container.appendChild(priBox);
   }
-  buildStats();
+
+  buildStatsFor('stats-them', 3);
+  buildStatsFor('stats-us', 2);
 
   // ═══════════════════════════════════════════════
-  //  CALCOLO
+  //  CALCOLO STATS
   // ═══════════════════════════════════════════════
-  // Carte "mie" = stato 2 (presa) o 3 (scopa)
-  // Carte "uscite" = stato 1 (uscita)
-  // Scope = numero di carte in stato 3
-  // ═══════════════════════════════════════════════
-  function calcolaStats() {
+  function calcolaStats(chi) {
     let denari = 0;
     let numCarte = 0;
-    let numScope = 0;
-    let hasSettebello = false;
-
-    const bestPerSuitMie = [null, null, null, null];
-    const bestPerSuitUscite = [null, null, null, null];
+    const bestPerSuit = { DENARI: null, COPPE: null, SPADE: null, BASTONI: null };
 
     cardStates.forEach((stato, index) => {
+      if (stato !== chi) return;
       const { row, col, suit } = cardInfo(index);
-      const val = PRIMIERA_VALUE[row] || 0;
+      numCarte++;
+      if (suit === 'DENARI') denari++;
 
-      if (stato === 2 || stato === 3) {
-        // Carta mia
-        numCarte++;
-        if (stato === 3) numScope++;
-        if (suit === 'DENARI') {
-          denari++;
-          if (row === 7) hasSettebello = true;
-        }
-        if (!bestPerSuitMie[col] || val > bestPerSuitMie[col].value) {
-          bestPerSuitMie[col] = { value: val, row, suit };
-        }
-      } else if (stato === 1) {
-        // Carta uscita (dell'avversario)
-        if (!bestPerSuitUscite[col] || val > bestPerSuitUscite[col].value) {
-          bestPerSuitUscite[col] = { value: val, row, suit };
-        }
+      const val = PRIMIERA_VALUE[row] || 0;
+      if (!bestPerSuit[suit] || val > bestPerSuit[suit].value) {
+        bestPerSuit[suit] = { value: val, row, suit };
       }
     });
 
-    // Primiera: +1 se in OGNI seme la mia carta più alta batte quella uscita.
-    // Considero solo i semi in cui ho almeno una carta.
-    // Se in un seme non ho carte → non posso vincere la primiera.
-    let primieraVinta = false;
-    let semiValidi = 0;
-    let semiVinti = 0;
-
-    for (let col = 0; col < 4; col++) {
-      const mia = bestPerSuitMie[col];
-      if (!mia) continue; // non ho carte di questo seme
-      semiValidi++;
-      const sua = bestPerSuitUscite[col];
-      if (!sua || mia.value > sua.value) {
-        semiVinti++;
-      }
-    }
-    // Primiera valida solo se ho tutti e 4 i semi e li vinco tutti
-    primieraVinta = (semiValidi === 4 && semiVinti === 4);
-
-    // Valore primiera (solo per display, somma delle mie carte migliori)
-    const primieraValore = bestPerSuitMie.reduce((sum, b) => sum + (b ? b.value : 0), 0);
-
-    return {
-      denari,
-      numCarte,
-      numScope,
-      hasSettebello,
-      primieraValore,
-      primieraVinta
-    };
+    return { denari, numCarte, bestPerSuit };
   }
 
   function ricalcolaPunteggi() {
-    const s = calcolaStats();
+    [2, 3].forEach(chi => {
+      const s = calcolaStats(chi);
+      const containerId = chi === 2 ? 'stats-us' : 'stats-them';
+      const container = document.getElementById(containerId);
 
-    // Barra statistiche
-    const valori = {
-      denari:   s.denari,
-      primiera: s.primieraVinta ? 1 : 0,   // 1 se vinta, 0 altrimenti
-      carte:    s.numCarte
-    };
+      // Ori
+      const ori = container.querySelector(`.stat[data-key="denari"]`);
+      if (ori) {
+        ori.querySelector('.value').textContent = s.denari;
+        ori.classList.toggle('zero', s.denari === 0);
+      }
 
-    STAT_ITEMS.forEach(item => {
-      const v = valori[item.key];
-      const el = document.getElementById('val-' + item.key);
-      const wrap = document.getElementById('stat-' + item.key);
-      if (el) el.textContent = v;
-      if (wrap) wrap.classList.toggle('zero', v === 0);
+      // Carte
+      const carte = container.querySelector(`.stat[data-key="carte"]`);
+      if (carte) {
+        carte.querySelector('.value').textContent = s.numCarte;
+        carte.classList.toggle('zero', s.numCarte === 0);
+      }
+
+      // Primiera: per seme mostra la carta più alta + evidenzia se vinta (7)
+      SUITS_ORDER.forEach(suit => {
+        const cell = container.querySelector(`.primiera-cell[data-suit="${suit}"]`);
+        if (!cell) return;
+        const b = s.bestPerSuit[suit];
+        const valEl = cell.querySelector('.card-val');
+        if (b) {
+          valEl.textContent = b.row;
+          cell.classList.remove('empty');
+          // Evidenzia in verde se hai il 7 (massimo possibile → vinto matematicamente)
+          cell.classList.toggle('won', b.row === MAX_ROW);
+        } else {
+          valEl.textContent = '—';
+          cell.classList.add('empty');
+          cell.classList.remove('won');
+        }
+      });
     });
-
-    // Totale
-    const punti = (s.hasSettebello ? 1 : 0)
-                + (s.numCarte >= 21 ? 1 : 0)
-                + (s.primieraVinta ? 1 : 0)
-                + s.numScope;
-
-    document.getElementById('total').textContent = punti;
   }
 
   // ═══════════════════════════════════════════════
@@ -605,31 +644,22 @@
       const arr = JSON.parse(raw);
       if (Array.isArray(arr) && arr.length === cardStates.length) {
         cardStates = arr;
-        cardStates.forEach((stato, index) => {
-          applicaStato(index, stato);
-        });
+        cardStates.forEach((stato, index) => applicaStato(index, stato));
       }
     } catch(e) { console.warn('Errore caricamento stato', e); }
   }
 
   // ═══════════════════════════════════════════════
-  //  BANNER + HINT
+  //  HINT
   // ═══════════════════════════════════════════════
-  function showBanner(text) {
-    const b = document.getElementById('banner');
-    b.textContent = text;
-    b.classList.add('show');
-    setTimeout(() => b.classList.remove('show'), 1100);
-  }
-
   function showHintOnce() {
-    if (localStorage.getItem('scopa_mono_hint_v3')) return;
+    if (localStorage.getItem('scopa_mono_hint_v5')) return;
     const hint = document.getElementById('hint');
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.remove('show');
-      localStorage.setItem('scopa_mono_hint_v3', '1');
-    }, 5500);
+      localStorage.setItem('scopa_mono_hint_v5', '1');
+    }, 6000);
   }
 
   // ═══════════════════════════════════════════════
@@ -637,7 +667,6 @@
   // ═══════════════════════════════════════════════
   loadState();
   ricalcolaPunteggi();
-  aggiornaUndo();
   showHintOnce();
 </script>
 
