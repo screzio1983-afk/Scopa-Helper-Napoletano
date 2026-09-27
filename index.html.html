@@ -72,9 +72,11 @@
     position: relative;
     min-height: 0;
     transition: transform 0.1s ease, box-shadow 0.15s ease,
-                background 0.15s ease, border-color 0.15s ease;
+                background 0.15s ease, border-color 0.15s ease,
+                opacity 0.25s ease;
     touch-action: none;
     -webkit-user-drag: none;
+    will-change: transform;
   }
 
   .card img {
@@ -114,18 +116,34 @@
   }
   .card.taken-them img { opacity: 0; }
 
-  /* Feedback drag */
+  /* ── STATO DRAG ── */
+  /* Mentre trascini, la carta è "sollevata" e non ha transizioni sul transform
+     (il transform è aggiornato in tempo reale via JS) */
+  .card.dragging {
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    z-index: 50;
+    cursor: grabbing;
+    border-color: #fbbf24;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 0 16px rgba(251,191,36,0.8);
+    /* Il transform è gestito da JS: translate(x, y) */
+  }
+
   .card.dragging-us {
     border-color: #22c55e;
-    box-shadow: 0 0 14px rgba(34,197,94,1);
-    z-index: 3;
-    transform: scale(0.96);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 0 18px rgba(34,197,94,1);
   }
+
   .card.dragging-them {
     border-color: #ef4444;
-    box-shadow: 0 0 14px rgba(239,68,68,1);
-    z-index: 3;
-    transform: scale(0.96);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 0 18px rgba(239,68,68,1);
+  }
+
+  /* Animazione di uscita (fly away) */
+  .card.flying {
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.6, 1),
+                opacity 0.35s ease;
+    opacity: 0;
+    pointer-events: none;
   }
 
   /* ── FOOTER (noi) ── */
@@ -156,7 +174,7 @@
   /* ── STATS ── */
   .stats {
     display: grid;
-    grid-template-columns: 1fr 1fr 2.2fr;
+    grid-template-columns: 1fr 1fr 2.6fr;
     gap: 3px;
     align-items: center;
   }
@@ -187,47 +205,53 @@
     letter-spacing: 0.03em;
   }
 
-  /* Primiera */
+  /* Primiera con miniature */
   .primiera-box {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 2px;
-    background: rgba(0,0,0,0.25);
-    border-radius: 5px;
-    padding: 2px;
+    gap: 3px;
+    padding: 1px;
   }
+
   .primiera-cell {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0px;
     min-width: 0;
-    padding: 2px 0;
+    aspect-ratio: 2 / 3;
     border-radius: 4px;
-    transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    border: 1px solid transparent;
+    border: 1px solid #3a3a4a;
+    background: rgba(0,0,0,0.3);
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
-  .primiera-cell .suit-icon {
-    font-size: clamp(0.65rem, 2.4vw, 0.85rem);
-    line-height: 1;
+
+  /* Placeholder vuoto: bordo tratteggiato + simbolo del seme sbiadito */
+  .primiera-cell.empty {
+    border-style: dashed;
+    border-color: #333;
   }
-  .primiera-cell .card-val {
-    font-size: clamp(0.65rem, 2.6vw, 0.9rem);
-    font-weight: bold;
-    line-height: 1;
-    color: #fbbf24;
-    min-height: 0.9em;
+  .primiera-cell.empty::after {
+    content: attr(data-suit-icon);
+    font-size: clamp(0.7rem, 2.8vw, 1rem);
+    opacity: 0.25;
+    filter: grayscale(1);
   }
-  .primiera-cell.empty .card-val { color: #444; }
+
+  /* Miniatura della carta */
+  .primiera-cell img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #fff;
+  }
+
+  /* Seme vinto (hai il 7) → bordo verde e glow */
   .primiera-cell.won {
-    background: #14532d;
     border-color: #22c55e;
-    box-shadow: 0 0 8px rgba(34,197,94,0.7);
-  }
-  .primiera-cell.won .card-val {
-    color: #22c55e;
-    text-shadow: 0 0 6px rgba(34,197,94,0.9);
+    box-shadow: 0 0 8px rgba(34,197,94,0.9);
   }
 
   /* ── RESET ── */
@@ -308,9 +332,10 @@
   const SUITS_ORDER = ['SPADE', 'COPPE', 'BASTONI', 'DENARI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_mono_v6';
-  const DRAG_THRESHOLD = 15;  // px minimi per drag (abbassato, era 25)
+  const STORAGE_KEY = 'scopa_mono_v7';
+  const DRAG_THRESHOLD = 12;
   const MAX_ROW = 7;
+  const FLY_DURATION = 350; // ms
 
   const PRIMIERA_VALUE = {
     1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
@@ -318,6 +343,7 @@
   };
 
   let cardStates = new Array(ROWS * COLS).fill(0);
+  // 0 = nuova, 1 = uscita, 2 = presa da NOI, 3 = presa da LORO
 
   // ═══════════════════════════════════════════════
   //  UTILITÀ
@@ -371,10 +397,7 @@
   const allCards = () => document.querySelectorAll('.card');
 
   // ═══════════════════════════════════════════════
-  //  GESTIONE TAP / DRAG (riscritta)
-  // ═══════════════════════════════════════════════
-  //  Ogni carta riceve solo "pointerdown" (o touchstart/mousedown).
-  //  Poi il tracking avviene su document per non perdere gli eventi.
+  //  GESTIONE DRAG CON ANIMAZIONE
   // ═══════════════════════════════════════════════
   let activeDrag = null;
   // activeDrag = { index, card, startX, startY, mode }
@@ -386,7 +409,6 @@
       startDrag(index, card, e.clientX, e.clientY);
     });
 
-    // Fallback per browser senza PointerEvent (vecchi iOS)
     card.addEventListener('touchstart', (e) => {
       if (window.PointerEvent) return;
       if (cardStates[index] !== 0) return;
@@ -409,11 +431,10 @@
     activeDrag = {
       index, card,
       startX: x, startY: y,
-      mode: null
+      mode: null,
+      moved: false
     };
-    card.classList.add('dragging-us'); // feedback neutro iniziale
-    card.classList.remove('dragging-us');
-    // Non aggiungo classi finché non supera la soglia
+    card.classList.add('dragging');
   }
 
   function updateDrag(x, y) {
@@ -422,7 +443,11 @@
     const dy = y - activeDrag.startY;
     const dist = Math.hypot(dx, dy);
 
+    // Muovi fisicamente la carta
+    activeDrag.card.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
+
     if (dist > DRAG_THRESHOLD) {
+      activeDrag.moved = true;
       const mode = dy > 0 ? 'us' : 'them';
       if (mode !== activeDrag.mode) {
         activeDrag.card.classList.remove('dragging-us', 'dragging-them');
@@ -437,20 +462,38 @@
 
   function endDrag(x, y) {
     if (!activeDrag) return;
-    const { index, card, startX, startY, mode } = activeDrag;
-    card.classList.remove('dragging-us', 'dragging-them');
+    const { index, card, startX, startY, moved } = activeDrag;
 
     const dx = x - startX;
     const dy = y - startY;
     const dist = Math.hypot(dx, dy);
 
+    // Rimuovi classi di drag
+    card.classList.remove('dragging', 'dragging-us', 'dragging-them');
+
     if (dist <= DRAG_THRESHOLD) {
-      applicaStato(index, 1); // tap → uscita
-    } else if (dy > 0) {
-      applicaStato(index, 2); // giù → noi
-    } else {
-      applicaStato(index, 3); // su → loro
+      // Tap → uscita
+      card.style.transform = ''; // torna a posto
+      activeDrag = null;
+      applicaStato(index, 1);
+      ricalcolaPunteggi();
+      saveState();
+      return;
     }
+
+    // C'è stato un drag: anima la carta che "vola via"
+    // Direzione: giù (us) o su (them)
+    const targetY = dy > 0 ? dy + 200 : dy - 200;
+    card.style.transform = `translate(${dx}px, ${targetY}px) scale(0.6)`;
+
+    // Applica lo stato SUBITO (l'immagine dentro sparisce, ma la carta vola via comunque)
+    const nuovoStato = dy > 0 ? 2 : 3;
+    applicaStato(index, nuovoStato);
+
+    // Dopo l'animazione, resetta il transform della carta
+    setTimeout(() => {
+      card.style.transform = '';
+    }, FLY_DURATION);
 
     activeDrag = null;
     ricalcolaPunteggi();
@@ -459,12 +502,13 @@
 
   function cancelDrag() {
     if (activeDrag) {
-      activeDrag.card.classList.remove('dragging-us', 'dragging-them');
+      activeDrag.card.classList.remove('dragging', 'dragging-us', 'dragging-them');
+      activeDrag.card.style.transform = '';
       activeDrag = null;
     }
   }
 
-  // Listener globali (sempre attivi)
+  // Listener globali
   document.addEventListener('pointermove', (e) => {
     if (!activeDrag) return;
     updateDrag(e.clientX, e.clientY);
@@ -475,7 +519,7 @@
   });
   document.addEventListener('pointercancel', cancelDrag);
 
-  // Fallback touch (browser senza PointerEvent)
+  // Fallback touch
   document.addEventListener('touchmove', (e) => {
     if (window.PointerEvent || !activeDrag) return;
     const t = e.touches[0];
@@ -492,7 +536,7 @@
     cancelDrag();
   });
 
-  // Fallback mouse (browser senza PointerEvent)
+  // Fallback mouse
   document.addEventListener('mousemove', (e) => {
     if (window.PointerEvent || !activeDrag) return;
     updateDrag(e.clientX, e.clientY);
@@ -552,6 +596,7 @@
       container.appendChild(div);
     });
 
+    // Primiera con 4 miniature di carte
     const priBox = document.createElement('div');
     priBox.className = 'primiera-box';
     priBox.dataset.player = chi;
@@ -562,17 +607,7 @@
       cell.className = 'primiera-cell empty';
       cell.dataset.suit = suit;
       cell.dataset.player = chi;
-
-      const si = document.createElement('div');
-      si.className = 'suit-icon';
-      si.textContent = SUIT_ICONS[suit];
-
-      const cv = document.createElement('div');
-      cv.className = 'card-val';
-      cv.textContent = '—';
-
-      cell.appendChild(si);
-      cell.appendChild(cv);
+      cell.dataset.suitIcon = SUIT_ICONS[suit];
       priBox.appendChild(cell);
     });
 
@@ -598,7 +633,7 @@
 
       const val = PRIMIERA_VALUE[row] || 0;
       if (!bestPerSuit[suit] || val > bestPerSuit[suit].value) {
-        bestPerSuit[suit] = { value: val, row, suit };
+        bestPerSuit[suit] = { value: val, row, suit, index };
       }
     });
 
@@ -611,31 +646,55 @@
       const containerId = chi === 2 ? 'stats-us' : 'stats-them';
       const container = document.getElementById(containerId);
 
+      // Ori
       const ori = container.querySelector(`.stat[data-key="denari"]`);
       if (ori) {
         ori.querySelector('.value').textContent = s.denari;
         ori.classList.toggle('zero', s.denari === 0);
       }
 
+      // Carte
       const carte = container.querySelector(`.stat[data-key="carte"]`);
       if (carte) {
         carte.querySelector('.value').textContent = s.numCarte;
         carte.classList.toggle('zero', s.numCarte === 0);
       }
 
+      // Primiera: miniatura della carta più alta per seme
       SUITS_ORDER.forEach(suit => {
         const cell = container.querySelector(`.primiera-cell[data-suit="${suit}"]`);
         if (!cell) return;
         const b = s.bestPerSuit[suit];
-        const valEl = cell.querySelector('.card-val');
+
+        // Svuota la cella
+        cell.innerHTML = '';
+        cell.classList.remove('won');
+
         if (b) {
-          valEl.textContent = b.row;
+          // C'è una carta: mostra la miniatura
           cell.classList.remove('empty');
-          cell.classList.toggle('won', b.row === MAX_ROW);
+          const img = document.createElement('img');
+          img.src = `${b.row} ${suit}.jpg`;
+          img.alt = `${b.row} di ${suit}`;
+          img.draggable = false;
+          img.onerror = function() {
+            // Fallback: se manca l'immagine, mostra numero + emoji
+            this.remove();
+            cell.textContent = `${b.row}${SUIT_ICONS[suit]}`;
+            cell.style.color = '#fbbf24';
+            cell.style.fontWeight = 'bold';
+            cell.style.fontSize = 'clamp(0.6rem, 2.4vw, 0.85rem)';
+            cell.style.display = 'flex';
+            cell.style.alignItems = 'center';
+            cell.style.justifyContent = 'center';
+          };
+          cell.appendChild(img);
+
+          // Se è un 7, evidenzia in verde
+          if (b.row === MAX_ROW) cell.classList.add('won');
         } else {
-          valEl.textContent = '—';
+          // Nessuna carta: placeholder
           cell.classList.add('empty');
-          cell.classList.remove('won');
         }
       });
     });
@@ -670,12 +729,12 @@
   //  HINT
   // ═══════════════════════════════════════════════
   function showHintOnce() {
-    if (localStorage.getItem('scopa_mono_hint_v6')) return;
+    if (localStorage.getItem('scopa_mono_hint_v7')) return;
     const hint = document.getElementById('hint');
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.remove('show');
-      localStorage.setItem('scopa_mono_hint_v6', '1');
+      localStorage.setItem('scopa_mono_hint_v7', '1');
     }, 6000);
   }
 
