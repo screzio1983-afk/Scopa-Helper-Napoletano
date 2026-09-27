@@ -31,21 +31,20 @@
     background: #2a1a1a;
     border: 1.5px solid #7f1d1d;
     border-radius: 8px;
-    padding: 4px;
+    padding: 4px 6px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
   }
 
   .header .title-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 4px;
   }
 
   .header .title {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: #f87171;
     font-weight: bold;
     text-transform: uppercase;
@@ -90,17 +89,9 @@
     transition: opacity 0.15s ease, filter 0.15s ease;
   }
 
-  /* Carta uscita */
-  .card.discarded {
-    background: #3a3a4a;
-    border-color: #3a3a4a;
-  }
-  .card.discarded img {
-    opacity: 0.55;
-    filter: brightness(0.5) grayscale(0.4);
-  }
+  .card.discarded { background: #3a3a4a; border-color: #3a3a4a; }
+  .card.discarded img { opacity: 0.55; filter: brightness(0.5) grayscale(0.4); }
 
-  /* Carta presa da NOI */
   .card.taken-us {
     background: #14532d;
     border-color: #22c55e;
@@ -108,7 +99,6 @@
   }
   .card.taken-us img { opacity: 0; }
 
-  /* Carta presa dall'AVVERSARIO */
   .card.taken-them {
     background: #4c1d1d;
     border-color: #ef4444;
@@ -116,34 +106,20 @@
   }
   .card.taken-them img { opacity: 0; }
 
-  /* ── STATO DRAG ── */
-  /* Mentre trascini, la carta è "sollevata" e non ha transizioni sul transform
-     (il transform è aggiornato in tempo reale via JS) */
   .card.dragging {
     transition: box-shadow 0.15s ease, border-color 0.15s ease;
     z-index: 50;
     cursor: grabbing;
     border-color: #fbbf24;
     box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 0 16px rgba(251,191,36,0.8);
-    /* Il transform è gestito da JS: translate(x, y) */
   }
-
   .card.dragging-us {
     border-color: #22c55e;
     box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 0 18px rgba(34,197,94,1);
   }
-
   .card.dragging-them {
     border-color: #ef4444;
     box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 0 18px rgba(239,68,68,1);
-  }
-
-  /* Animazione di uscita (fly away) */
-  .card.flying {
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.6, 1),
-                opacity 0.35s ease;
-    opacity: 0;
-    pointer-events: none;
   }
 
   /* ── FOOTER (noi) ── */
@@ -152,19 +128,20 @@
     background: #1a2a1a;
     border: 1.5px solid #166534;
     border-radius: 8px;
-    padding: 4px;
+    padding: 4px 6px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
   }
+
   .footer .title-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 4px;
   }
+
   .footer .title {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: #4ade80;
     font-weight: bold;
     text-transform: uppercase;
@@ -174,8 +151,8 @@
   /* ── STATS ── */
   .stats {
     display: grid;
-    grid-template-columns: 1fr 1fr 2.6fr;
-    gap: 3px;
+    grid-template-columns: 1.1fr 1fr 1fr 1.4fr;
+    gap: 4px;
     align-items: center;
   }
 
@@ -187,17 +164,21 @@
     gap: 1px;
     min-width: 0;
   }
+
   .stat .icon {
-    font-size: clamp(0.8rem, 3vw, 1rem);
+    font-size: clamp(0.75rem, 2.8vw, 0.95rem);
     line-height: 1;
   }
+
   .stat .value {
     font-size: clamp(0.7rem, 2.8vw, 0.95rem);
     font-weight: bold;
     line-height: 1;
     color: #fbbf24;
   }
+
   .stat.zero .value { color: #555; }
+
   .stat .label {
     font-size: 0.5rem;
     color: #888;
@@ -205,41 +186,73 @@
     letter-spacing: 0.03em;
   }
 
-  /* Primiera con miniature */
-  .primiera-box {
+  /* Totale: più grande e dorato */
+  .stat.total {
+    border-radius: 6px;
+    padding: 2px 4px;
+  }
+
+  .stat.total .value {
+    font-size: clamp(1.1rem, 4.5vw, 1.5rem);
+    color: #fbbf24;
+  }
+
+  .header .stat.total { background: rgba(251,191,36,0.1); }
+  .footer .stat.total { background: rgba(251,191,36,0.1); }
+
+  /* Primiera: numero */
+  .stat.primiera .value {
+    color: #a78bfa;
+  }
+
+  .stat.primiera.zero .value { color: #555; }
+
+  /* ── RIGA CENTRALE PRIMIERA ── */
+  .primiera-row {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 3px 0;
+  }
+
+  .primiera-side {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 3px;
-    padding: 1px;
+    align-items: center;
   }
 
+  /* Le celle sono 15% più piccole: aspect-ratio 2/3 ma con max-height */
   .primiera-cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
     aspect-ratio: 2 / 3;
-    border-radius: 4px;
+    max-height: 46px;
+    border-radius: 3px;
     border: 1px solid #3a3a4a;
     background: rgba(0,0,0,0.3);
     overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    justify-self: center;
+    width: 100%;
+    max-width: 32px;
   }
 
-  /* Placeholder vuoto: bordo tratteggiato + simbolo del seme sbiadito */
   .primiera-cell.empty {
     border-style: dashed;
     border-color: #333;
   }
+
   .primiera-cell.empty::after {
     content: attr(data-suit-icon);
-    font-size: clamp(0.7rem, 2.8vw, 1rem);
+    font-size: 0.75rem;
     opacity: 0.25;
     filter: grayscale(1);
   }
 
-  /* Miniatura della carta */
   .primiera-cell img {
     width: 100%;
     height: 100%;
@@ -248,10 +261,22 @@
     background: #fff;
   }
 
-  /* Seme vinto (hai il 7) → bordo verde e glow */
   .primiera-cell.won {
     border-color: #22c55e;
-    box-shadow: 0 0 8px rgba(34,197,94,0.9);
+    box-shadow: 0 0 6px rgba(34,197,94,0.9);
+  }
+
+  /* Lato LORO: bordo rosso tenue */
+  .primiera-side.them .primiera-cell:not(.empty) {
+    border-color: #7f1d1d;
+  }
+  .primiera-side.them .primiera-cell.won {
+    border-color: #22c55e;
+  }
+
+  /* Lato NOI: bordo verde tenue */
+  .primiera-side.us .primiera-cell:not(.empty) {
+    border-color: #166534;
   }
 
   /* ── RESET ── */
@@ -267,7 +292,7 @@
     border-radius: 6px;
     font-weight: bold;
     font-size: 0.68rem;
-    padding: 5px 12px;
+    padding: 4px 10px;
     cursor: pointer;
     white-space: nowrap;
   }
@@ -297,6 +322,7 @@
 </head>
 <body>
 
+  <!-- HEADER: LORO -->
   <div class="header">
     <div class="title-row">
       <span class="title">▼ LORO</span>
@@ -304,8 +330,16 @@
     <div class="stats" id="stats-them"></div>
   </div>
 
+  <!-- GRIGLIA -->
   <div class="grid" id="grid"></div>
 
+  <!-- RIGA CENTRALE PRIMIERA: noi a sx, loro a dx -->
+  <div class="primiera-row">
+    <div class="primiera-side us" id="primiera-us"></div>
+    <div class="primiera-side them" id="primiera-them"></div>
+  </div>
+
+  <!-- FOOTER: NOI -->
   <div class="footer">
     <div class="stats" id="stats-us"></div>
     <div class="title-row">
@@ -313,10 +347,12 @@
     </div>
   </div>
 
+  <!-- RESET -->
   <div class="reset-bar">
     <button onclick="resetAll()">RESET</button>
   </div>
 
+  <!-- HINT -->
   <div class="hint" id="hint">
     <b>Tap</b> = carta uscita<br>
     <b>Trascina giù ↓</b> = presa nostra<br>
@@ -332,10 +368,10 @@
   const SUITS_ORDER = ['SPADE', 'COPPE', 'BASTONI', 'DENARI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_mono_v7';
+  const STORAGE_KEY = 'scopa_mono_v8';
   const DRAG_THRESHOLD = 12;
   const MAX_ROW = 7;
-  const FLY_DURATION = 350; // ms
+  const FLY_DURATION = 350;
 
   const PRIMIERA_VALUE = {
     1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
@@ -397,10 +433,9 @@
   const allCards = () => document.querySelectorAll('.card');
 
   // ═══════════════════════════════════════════════
-  //  GESTIONE DRAG CON ANIMAZIONE
+  //  DRAG
   // ═══════════════════════════════════════════════
   let activeDrag = null;
-  // activeDrag = { index, card, startX, startY, mode }
 
   function attachHandlers(card, index) {
     card.addEventListener('pointerdown', (e) => {
@@ -428,12 +463,7 @@
   }
 
   function startDrag(index, card, x, y) {
-    activeDrag = {
-      index, card,
-      startX: x, startY: y,
-      mode: null,
-      moved: false
-    };
+    activeDrag = { index, card, startX: x, startY: y, mode: null };
     card.classList.add('dragging');
   }
 
@@ -443,11 +473,9 @@
     const dy = y - activeDrag.startY;
     const dist = Math.hypot(dx, dy);
 
-    // Muovi fisicamente la carta
     activeDrag.card.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
 
     if (dist > DRAG_THRESHOLD) {
-      activeDrag.moved = true;
       const mode = dy > 0 ? 'us' : 'them';
       if (mode !== activeDrag.mode) {
         activeDrag.card.classList.remove('dragging-us', 'dragging-them');
@@ -462,18 +490,16 @@
 
   function endDrag(x, y) {
     if (!activeDrag) return;
-    const { index, card, startX, startY, moved } = activeDrag;
+    const { index, card, startX, startY } = activeDrag;
 
     const dx = x - startX;
     const dy = y - startY;
     const dist = Math.hypot(dx, dy);
 
-    // Rimuovi classi di drag
     card.classList.remove('dragging', 'dragging-us', 'dragging-them');
 
     if (dist <= DRAG_THRESHOLD) {
-      // Tap → uscita
-      card.style.transform = ''; // torna a posto
+      card.style.transform = '';
       activeDrag = null;
       applicaStato(index, 1);
       ricalcolaPunteggi();
@@ -481,19 +507,13 @@
       return;
     }
 
-    // C'è stato un drag: anima la carta che "vola via"
-    // Direzione: giù (us) o su (them)
     const targetY = dy > 0 ? dy + 200 : dy - 200;
     card.style.transform = `translate(${dx}px, ${targetY}px) scale(0.6)`;
 
-    // Applica lo stato SUBITO (l'immagine dentro sparisce, ma la carta vola via comunque)
     const nuovoStato = dy > 0 ? 2 : 3;
     applicaStato(index, nuovoStato);
 
-    // Dopo l'animazione, resetta il transform della carta
-    setTimeout(() => {
-      card.style.transform = '';
-    }, FLY_DURATION);
+    setTimeout(() => { card.style.transform = ''; }, FLY_DURATION);
 
     activeDrag = null;
     ricalcolaPunteggi();
@@ -508,7 +528,6 @@
     }
   }
 
-  // Listener globali
   document.addEventListener('pointermove', (e) => {
     if (!activeDrag) return;
     updateDrag(e.clientX, e.clientY);
@@ -519,7 +538,6 @@
   });
   document.addEventListener('pointercancel', cancelDrag);
 
-  // Fallback touch
   document.addEventListener('touchmove', (e) => {
     if (window.PointerEvent || !activeDrag) return;
     const t = e.touches[0];
@@ -536,7 +554,6 @@
     cancelDrag();
   });
 
-  // Fallback mouse
   document.addEventListener('mousemove', (e) => {
     if (window.PointerEvent || !activeDrag) return;
     updateDrag(e.clientX, e.clientY);
@@ -561,20 +578,25 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  COSTRUZIONE STATS
+  //  COSTRUZIONE STATS (header e footer)
   // ═══════════════════════════════════════════════
   function buildStatsFor(containerId, chi) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
 
+    // Ordine: Totale, Ori, Carte, Primiera (numero)
     const items = [
-      { key: 'denari', icon: '🪙', label: 'Ori'   },
-      { key: 'carte',  icon: '🃏', label: 'Carte' }
+      { key: 'total',    icon: '🏆', label: 'Totale',  total: true },
+      { key: 'denari',   icon: '🪙', label: 'Ori'   },
+      { key: 'carte',    icon: '🃏', label: 'Carte' },
+      { key: 'primiera', icon: '🎯', label: 'Primiera', primiera: true }
     ];
 
     items.forEach(item => {
       const div = document.createElement('div');
       div.className = 'stat zero';
+      if (item.total) div.classList.add('total');
+      if (item.primiera) div.classList.add('primiera');
       div.dataset.player = chi;
       div.dataset.key = item.key;
 
@@ -595,12 +617,17 @@
       div.appendChild(lab);
       container.appendChild(div);
     });
+  }
 
-    // Primiera con 4 miniature di carte
-    const priBox = document.createElement('div');
-    priBox.className = 'primiera-box';
-    priBox.dataset.player = chi;
-    priBox.dataset.key = 'primiera';
+  buildStatsFor('stats-them', 3);
+  buildStatsFor('stats-us', 2);
+
+  // ═══════════════════════════════════════════════
+  //  COSTRUZIONE RIGA CENTRALE PRIMIERA
+  // ═══════════════════════════════════════════════
+  function buildPrimieraRow(containerId, chi) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
 
     SUITS_ORDER.forEach(suit => {
       const cell = document.createElement('div');
@@ -608,28 +635,30 @@
       cell.dataset.suit = suit;
       cell.dataset.player = chi;
       cell.dataset.suitIcon = SUIT_ICONS[suit];
-      priBox.appendChild(cell);
+      container.appendChild(cell);
     });
-
-    container.appendChild(priBox);
   }
 
-  buildStatsFor('stats-them', 3);
-  buildStatsFor('stats-us', 2);
+  buildPrimieraRow('primiera-us', 2);
+  buildPrimieraRow('primiera-them', 3);
 
   // ═══════════════════════════════════════════════
-  //  CALCOLO
+  //  CALCOLO STATS
   // ═══════════════════════════════════════════════
   function calcolaStats(chi) {
     let denari = 0;
     let numCarte = 0;
+    let hasSettebello = false;
     const bestPerSuit = { DENARI: null, COPPE: null, SPADE: null, BASTONI: null };
 
     cardStates.forEach((stato, index) => {
       if (stato !== chi) return;
       const { row, col, suit } = cardInfo(index);
       numCarte++;
-      if (suit === 'DENARI') denari++;
+      if (suit === 'DENARI') {
+        denari++;
+        if (row === 7) hasSettebello = true;
+      }
 
       const val = PRIMIERA_VALUE[row] || 0;
       if (!bestPerSuit[suit] || val > bestPerSuit[suit].value) {
@@ -637,66 +666,125 @@
       }
     });
 
-    return { denari, numCarte, bestPerSuit };
+    const semiCompleti = Object.values(bestPerSuit).filter(b => b !== null).length;
+    const primieraValore = Object.values(bestPerSuit).reduce(
+      (sum, b) => sum + (b ? b.value : 0), 0
+    );
+
+    return { denari, numCarte, hasSettebello, bestPerSuit, semiCompleti, primieraValore };
+  }
+
+  function calcolaVincitori(stats0, stats1) {
+    // stats0 = NOI (chi=2), stats1 = LORO (chi=3)
+    // Restituisce: { denariVinti, carteVinti, primieraVinta }
+
+    // Denari: chi ne ha di più
+    let denariVinti = null;
+    if (stats0.denari !== stats1.denari) {
+      denariVinti = stats0.denari > stats1.denari ? 'us' : 'them';
+    }
+
+    // Carte: chi ha ≥ 21
+    let carteVinte = null;
+    const c0 = stats0.numCarte >= 21;
+    const c1 = stats1.numCarte >= 21;
+    if (c0 && !c1) carteVinte = 'us';
+    else if (c1 && !c0) carteVinte = 'them';
+    // se entrambi ≥ 21 (impossibile con 40 carte ma per sicurezza) → nessuno
+
+    // Primiera: chi ha tutti e 4 i semi e valore più alto
+    let primieraVinta = null;
+    const p0Ok = stats0.semiCompleti === 4;
+    const p1Ok = stats1.semiCompleti === 4;
+    if (p0Ok && p1Ok) {
+      if (stats0.primieraValore > stats1.primieraValore) primieraVinta = 'us';
+      else if (stats1.primieraValore > stats0.primieraValore) primieraVinta = 'them';
+    } else if (p0Ok) {
+      primieraVinta = 'us';
+    } else if (p1Ok) {
+      primieraVinta = 'them';
+    }
+
+    return { denariVinti, carteVinte, primieraVinta };
   }
 
   function ricalcolaPunteggi() {
-    [2, 3].forEach(chi => {
-      const s = calcolaStats(chi);
-      const containerId = chi === 2 ? 'stats-us' : 'stats-them';
-      const container = document.getElementById(containerId);
+    const statsUs = calcolaStats(2);
+    const statsThem = calcolaStats(3);
+    const vinc = calcolaVincitori(statsUs, statsThem);
 
-      // Ori
-      const ori = container.querySelector(`.stat[data-key="denari"]`);
-      if (ori) {
-        ori.querySelector('.value').textContent = s.denari;
-        ori.classList.toggle('zero', s.denari === 0);
+    // ── Header LORO ──
+    const themContainer = document.getElementById('stats-them');
+    const totThem = (statsThem.hasSettebello ? 1 : 0)
+                  + (vinc.carteVinte === 'them' ? 1 : 0)
+                  + (vinc.denariVinti === 'them' ? 1 : 0)
+                  + (vinc.primieraVinta === 'them' ? 1 : 0);
+    themContainer.querySelector('[data-key="total"] .value').textContent = totThem;
+    themContainer.querySelector('[data-key="total"]').classList.toggle('zero', totThem === 0);
+    themContainer.querySelector('[data-key="denari"] .value').textContent = statsThem.denari;
+    themContainer.querySelector('[data-key="denari"]').classList.toggle('zero', statsThem.denari === 0);
+    themContainer.querySelector('[data-key="carte"] .value').textContent = statsThem.numCarte;
+    themContainer.querySelector('[data-key="carte"]').classList.toggle('zero', statsThem.numCarte === 0);
+
+    // Primiera LORO: "1" se vinta, altrimenti valore parziale
+    let priThemDisplay;
+    if (vinc.primieraVinta === 'them') priThemDisplay = 1;
+    else priThemDisplay = statsThem.primieraValore;
+    themContainer.querySelector('[data-key="primiera"] .value').textContent = priThemDisplay;
+    themContainer.querySelector('[data-key="primiera"]').classList.toggle('zero', priThemDisplay === 0);
+
+    // ── Footer NOI ──
+    const usContainer = document.getElementById('stats-us');
+    const totUs = (statsUs.hasSettebello ? 1 : 0)
+                + (vinc.carteVinte === 'us' ? 1 : 0)
+                + (vinc.denariVinti === 'us' ? 1 : 0)
+                + (vinc.primieraVinta === 'us' ? 1 : 0);
+    usContainer.querySelector('[data-key="total"] .value').textContent = totUs;
+    usContainer.querySelector('[data-key="total"]').classList.toggle('zero', totUs === 0);
+    usContainer.querySelector('[data-key="denari"] .value').textContent = statsUs.denari;
+    usContainer.querySelector('[data-key="denari"]').classList.toggle('zero', statsUs.denari === 0);
+    usContainer.querySelector('[data-key="carte"] .value').textContent = statsUs.numCarte;
+    usContainer.querySelector('[data-key="carte"]').classList.toggle('zero', statsUs.numCarte === 0);
+
+    let priUsDisplay;
+    if (vinc.primieraVinta === 'us') priUsDisplay = 1;
+    else priUsDisplay = statsUs.primieraValore;
+    usContainer.querySelector('[data-key="primiera"] .value').textContent = priUsDisplay;
+    usContainer.querySelector('[data-key="primiera"]').classList.toggle('zero', priUsDisplay === 0);
+
+    // ── Riga centrale: miniature ──
+    renderPrimieraRow('primiera-us', statsUs);
+    renderPrimieraRow('primiera-them', statsThem);
+  }
+
+  function renderPrimieraRow(containerId, stats) {
+    const container = document.getElementById(containerId);
+    SUITS_ORDER.forEach(suit => {
+      const cell = container.querySelector(`.primiera-cell[data-suit="${suit}"]`);
+      if (!cell) return;
+
+      // Reset
+      cell.innerHTML = '';
+      cell.classList.remove('won', 'empty');
+
+      const b = stats.bestPerSuit[suit];
+      if (b) {
+        const img = document.createElement('img');
+        img.src = `${b.row} ${suit}.jpg`;
+        img.alt = `${b.row} di ${suit}`;
+        img.draggable = false;
+        img.onerror = function() {
+          this.remove();
+          cell.textContent = `${b.row}${SUIT_ICONS[suit]}`;
+          cell.style.color = '#fbbf24';
+          cell.style.fontWeight = 'bold';
+          cell.style.fontSize = '0.6rem';
+        };
+        cell.appendChild(img);
+        if (b.row === MAX_ROW) cell.classList.add('won');
+      } else {
+        cell.classList.add('empty');
       }
-
-      // Carte
-      const carte = container.querySelector(`.stat[data-key="carte"]`);
-      if (carte) {
-        carte.querySelector('.value').textContent = s.numCarte;
-        carte.classList.toggle('zero', s.numCarte === 0);
-      }
-
-      // Primiera: miniatura della carta più alta per seme
-      SUITS_ORDER.forEach(suit => {
-        const cell = container.querySelector(`.primiera-cell[data-suit="${suit}"]`);
-        if (!cell) return;
-        const b = s.bestPerSuit[suit];
-
-        // Svuota la cella
-        cell.innerHTML = '';
-        cell.classList.remove('won');
-
-        if (b) {
-          // C'è una carta: mostra la miniatura
-          cell.classList.remove('empty');
-          const img = document.createElement('img');
-          img.src = `${b.row} ${suit}.jpg`;
-          img.alt = `${b.row} di ${suit}`;
-          img.draggable = false;
-          img.onerror = function() {
-            // Fallback: se manca l'immagine, mostra numero + emoji
-            this.remove();
-            cell.textContent = `${b.row}${SUIT_ICONS[suit]}`;
-            cell.style.color = '#fbbf24';
-            cell.style.fontWeight = 'bold';
-            cell.style.fontSize = 'clamp(0.6rem, 2.4vw, 0.85rem)';
-            cell.style.display = 'flex';
-            cell.style.alignItems = 'center';
-            cell.style.justifyContent = 'center';
-          };
-          cell.appendChild(img);
-
-          // Se è un 7, evidenzia in verde
-          if (b.row === MAX_ROW) cell.classList.add('won');
-        } else {
-          // Nessuna carta: placeholder
-          cell.classList.add('empty');
-        }
-      });
     });
   }
 
@@ -729,12 +817,12 @@
   //  HINT
   // ═══════════════════════════════════════════════
   function showHintOnce() {
-    if (localStorage.getItem('scopa_mono_hint_v7')) return;
+    if (localStorage.getItem('scopa_mono_hint_v8')) return;
     const hint = document.getElementById('hint');
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.remove('show');
-      localStorage.setItem('scopa_mono_hint_v7', '1');
+      localStorage.setItem('scopa_mono_hint_v8', '1');
     }, 6000);
   }
 
