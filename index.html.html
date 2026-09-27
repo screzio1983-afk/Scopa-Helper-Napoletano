@@ -148,7 +148,7 @@
     letter-spacing: 0.08em;
   }
 
-  /* ── STATS ── */
+  /* ── STATS (senza icone) ── */
   .stats {
     display: grid;
     grid-template-columns: 1.1fr 1fr 1fr 1.4fr;
@@ -161,17 +161,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1px;
+    gap: 0;
     min-width: 0;
   }
 
-  .stat .icon {
-    font-size: clamp(0.75rem, 2.8vw, 0.95rem);
-    line-height: 1;
-  }
-
   .stat .value {
-    font-size: clamp(0.7rem, 2.8vw, 0.95rem);
+    font-size: clamp(0.75rem, 3vw, 1rem);
     font-weight: bold;
     line-height: 1;
     color: #fbbf24;
@@ -184,6 +179,7 @@
     color: #888;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    margin-top: 1px;
   }
 
   /* Totale: più grande e dorato */
@@ -194,39 +190,30 @@
 
   .stat.total .value {
     font-size: clamp(1.1rem, 4.5vw, 1.5rem);
-    color: #fbbf24;
   }
 
   .header .stat.total { background: rgba(251,191,36,0.1); }
   .footer .stat.total { background: rgba(251,191,36,0.1); }
 
-  /* Primiera: numero */
-  .stat.primiera .value {
-    color: #a78bfa;
-  }
-
+  /* Primiera: numero viola */
+  .stat.primiera .value { color: #a78bfa; }
   .stat.primiera.zero .value { color: #555; }
 
-  /* ── RIGA CENTRALE PRIMIERA ── */
+  /* ── RIGHE PRIMIERA (centrate) ── */
   .primiera-row {
     flex: 0 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    padding: 3px 0;
-  }
-
-  .primiera-side {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 3px;
+    display: flex;
+    justify-content: center;
     align-items: center;
+    gap: 3px;
+    padding: 2px 0;
   }
 
-  /* Le celle sono 15% più piccole: aspect-ratio 2/3 ma con max-height */
   .primiera-cell {
     aspect-ratio: 2 / 3;
-    max-height: 46px;
+    max-height: 42px;
+    max-width: 28px;
+    width: 100%;
     border-radius: 3px;
     border: 1px solid #3a3a4a;
     background: rgba(0,0,0,0.3);
@@ -236,9 +223,7 @@
     justify-content: center;
     position: relative;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    justify-self: center;
-    width: 100%;
-    max-width: 32px;
+    flex: 0 0 auto;
   }
 
   .primiera-cell.empty {
@@ -248,7 +233,7 @@
 
   .primiera-cell.empty::after {
     content: attr(data-suit-icon);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     opacity: 0.25;
     filter: grayscale(1);
   }
@@ -266,16 +251,16 @@
     box-shadow: 0 0 6px rgba(34,197,94,0.9);
   }
 
-  /* Lato LORO: bordo rosso tenue */
-  .primiera-side.them .primiera-cell:not(.empty) {
+  /* Primiera LORO (in alto): bordo rosso tenue */
+  #primiera-them .primiera-cell:not(.empty) {
     border-color: #7f1d1d;
   }
-  .primiera-side.them .primiera-cell.won {
+  #primiera-them .primiera-cell.won {
     border-color: #22c55e;
   }
 
-  /* Lato NOI: bordo verde tenue */
-  .primiera-side.us .primiera-cell:not(.empty) {
+  /* Primiera NOI (in basso): bordo verde tenue */
+  #primiera-us .primiera-cell:not(.empty) {
     border-color: #166534;
   }
 
@@ -330,14 +315,14 @@
     <div class="stats" id="stats-them"></div>
   </div>
 
+  <!-- PRIMIERA LORO (in alto, centrata) -->
+  <div class="primiera-row" id="primiera-them"></div>
+
   <!-- GRIGLIA -->
   <div class="grid" id="grid"></div>
 
-  <!-- RIGA CENTRALE PRIMIERA: noi a sx, loro a dx -->
-  <div class="primiera-row">
-    <div class="primiera-side us" id="primiera-us"></div>
-    <div class="primiera-side them" id="primiera-them"></div>
-  </div>
+  <!-- PRIMIERA NOI (in basso, centrata) -->
+  <div class="primiera-row" id="primiera-us"></div>
 
   <!-- FOOTER: NOI -->
   <div class="footer">
@@ -368,7 +353,7 @@
   const SUITS_ORDER = ['SPADE', 'COPPE', 'BASTONI', 'DENARI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_mono_v8';
+  const STORAGE_KEY = 'scopa_mono_v9';
   const DRAG_THRESHOLD = 12;
   const MAX_ROW = 7;
   const FLY_DURATION = 350;
@@ -578,18 +563,17 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  COSTRUZIONE STATS (header e footer)
+  //  COSTRUZIONE STATS (senza icone)
   // ═══════════════════════════════════════════════
   function buildStatsFor(containerId, chi) {
     const container = document.getElementById(containerId);
     container.innerHTML = '';
 
-    // Ordine: Totale, Ori, Carte, Primiera (numero)
     const items = [
-      { key: 'total',    icon: '🏆', label: 'Totale',  total: true },
-      { key: 'denari',   icon: '🪙', label: 'Ori'   },
-      { key: 'carte',    icon: '🃏', label: 'Carte' },
-      { key: 'primiera', icon: '🎯', label: 'Primiera', primiera: true }
+      { key: 'total',    label: 'Totale',  total: true },
+      { key: 'denari',   label: 'Ori'      },
+      { key: 'carte',    label: 'Carte'    },
+      { key: 'primiera', label: 'Primiera', primiera: true }
     ];
 
     items.forEach(item => {
@@ -600,10 +584,6 @@
       div.dataset.player = chi;
       div.dataset.key = item.key;
 
-      const icon = document.createElement('div');
-      icon.className = 'icon';
-      icon.textContent = item.icon;
-
       const val = document.createElement('div');
       val.className = 'value';
       val.textContent = '0';
@@ -612,7 +592,6 @@
       lab.className = 'label';
       lab.textContent = item.label;
 
-      div.appendChild(icon);
       div.appendChild(val);
       div.appendChild(lab);
       container.appendChild(div);
@@ -623,7 +602,7 @@
   buildStatsFor('stats-us', 2);
 
   // ═══════════════════════════════════════════════
-  //  COSTRUZIONE RIGA CENTRALE PRIMIERA
+  //  COSTRUZIONE RIGHE PRIMIERA
   // ═══════════════════════════════════════════════
   function buildPrimieraRow(containerId, chi) {
     const container = document.getElementById(containerId);
@@ -639,8 +618,8 @@
     });
   }
 
-  buildPrimieraRow('primiera-us', 2);
   buildPrimieraRow('primiera-them', 3);
+  buildPrimieraRow('primiera-us', 2);
 
   // ═══════════════════════════════════════════════
   //  CALCOLO STATS
@@ -674,31 +653,24 @@
     return { denari, numCarte, hasSettebello, bestPerSuit, semiCompleti, primieraValore };
   }
 
-  function calcolaVincitori(stats0, stats1) {
-    // stats0 = NOI (chi=2), stats1 = LORO (chi=3)
-    // Restituisce: { denariVinti, carteVinti, primieraVinta }
-
-    // Denari: chi ne ha di più
+  function calcolaVincitori(statsUs, statsThem) {
     let denariVinti = null;
-    if (stats0.denari !== stats1.denari) {
-      denariVinti = stats0.denari > stats1.denari ? 'us' : 'them';
+    if (statsUs.denari !== statsThem.denari) {
+      denariVinti = statsUs.denari > statsThem.denari ? 'us' : 'them';
     }
 
-    // Carte: chi ha ≥ 21
     let carteVinte = null;
-    const c0 = stats0.numCarte >= 21;
-    const c1 = stats1.numCarte >= 21;
+    const c0 = statsUs.numCarte >= 21;
+    const c1 = statsThem.numCarte >= 21;
     if (c0 && !c1) carteVinte = 'us';
     else if (c1 && !c0) carteVinte = 'them';
-    // se entrambi ≥ 21 (impossibile con 40 carte ma per sicurezza) → nessuno
 
-    // Primiera: chi ha tutti e 4 i semi e valore più alto
     let primieraVinta = null;
-    const p0Ok = stats0.semiCompleti === 4;
-    const p1Ok = stats1.semiCompleti === 4;
+    const p0Ok = statsUs.semiCompleti === 4;
+    const p1Ok = statsThem.semiCompleti === 4;
     if (p0Ok && p1Ok) {
-      if (stats0.primieraValore > stats1.primieraValore) primieraVinta = 'us';
-      else if (stats1.primieraValore > stats0.primieraValore) primieraVinta = 'them';
+      if (statsUs.primieraValore > statsThem.primieraValore) primieraVinta = 'us';
+      else if (statsThem.primieraValore > statsUs.primieraValore) primieraVinta = 'them';
     } else if (p0Ok) {
       primieraVinta = 'us';
     } else if (p1Ok) {
@@ -726,10 +698,7 @@
     themContainer.querySelector('[data-key="carte"] .value').textContent = statsThem.numCarte;
     themContainer.querySelector('[data-key="carte"]').classList.toggle('zero', statsThem.numCarte === 0);
 
-    // Primiera LORO: "1" se vinta, altrimenti valore parziale
-    let priThemDisplay;
-    if (vinc.primieraVinta === 'them') priThemDisplay = 1;
-    else priThemDisplay = statsThem.primieraValore;
+    let priThemDisplay = (vinc.primieraVinta === 'them') ? 1 : statsThem.primieraValore;
     themContainer.querySelector('[data-key="primiera"] .value').textContent = priThemDisplay;
     themContainer.querySelector('[data-key="primiera"]').classList.toggle('zero', priThemDisplay === 0);
 
@@ -746,15 +715,13 @@
     usContainer.querySelector('[data-key="carte"] .value').textContent = statsUs.numCarte;
     usContainer.querySelector('[data-key="carte"]').classList.toggle('zero', statsUs.numCarte === 0);
 
-    let priUsDisplay;
-    if (vinc.primieraVinta === 'us') priUsDisplay = 1;
-    else priUsDisplay = statsUs.primieraValore;
+    let priUsDisplay = (vinc.primieraVinta === 'us') ? 1 : statsUs.primieraValore;
     usContainer.querySelector('[data-key="primiera"] .value').textContent = priUsDisplay;
     usContainer.querySelector('[data-key="primiera"]').classList.toggle('zero', priUsDisplay === 0);
 
-    // ── Riga centrale: miniature ──
-    renderPrimieraRow('primiera-us', statsUs);
+    // ── Righe primiera ──
     renderPrimieraRow('primiera-them', statsThem);
+    renderPrimieraRow('primiera-us', statsUs);
   }
 
   function renderPrimieraRow(containerId, stats) {
@@ -763,7 +730,6 @@
       const cell = container.querySelector(`.primiera-cell[data-suit="${suit}"]`);
       if (!cell) return;
 
-      // Reset
       cell.innerHTML = '';
       cell.classList.remove('won', 'empty');
 
@@ -817,12 +783,12 @@
   //  HINT
   // ═══════════════════════════════════════════════
   function showHintOnce() {
-    if (localStorage.getItem('scopa_mono_hint_v8')) return;
+    if (localStorage.getItem('scopa_mono_hint_v9')) return;
     const hint = document.getElementById('hint');
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.remove('show');
-      localStorage.setItem('scopa_mono_hint_v8', '1');
+      localStorage.setItem('scopa_mono_hint_v9', '1');
     }, 6000);
   }
 
