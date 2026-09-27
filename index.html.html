@@ -11,7 +11,6 @@
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
-    touch-action: manipulation;
   }
 
   body {
@@ -23,6 +22,7 @@
     padding: 4px;
     gap: 4px;
     user-select: none;
+    -webkit-user-select: none;
   }
 
   /* ── HEADER (avversario) ── */
@@ -74,6 +74,7 @@
     transition: transform 0.1s ease, box-shadow 0.15s ease,
                 background 0.15s ease, border-color 0.15s ease;
     touch-action: none;
+    -webkit-user-drag: none;
   }
 
   .card img {
@@ -83,36 +84,34 @@
     display: block;
     background: #fff;
     pointer-events: none;
+    -webkit-user-drag: none;
     transition: opacity 0.15s ease, filter 0.15s ease;
   }
 
-  /* Carta uscita: annerita MA ancora leggibile */
+  /* Carta uscita */
   .card.discarded {
     background: #3a3a4a;
     border-color: #3a3a4a;
   }
-
   .card.discarded img {
     opacity: 0.55;
     filter: brightness(0.5) grayscale(0.4);
   }
 
-  /* Carta presa da NOI (verde) */
+  /* Carta presa da NOI */
   .card.taken-us {
     background: #14532d;
     border-color: #22c55e;
     box-shadow: inset 0 0 10px rgba(34,197,94,0.6);
   }
-
   .card.taken-us img { opacity: 0; }
 
-  /* Carta presa dall'AVVERSARIO (rosso) */
+  /* Carta presa dall'AVVERSARIO */
   .card.taken-them {
     background: #4c1d1d;
     border-color: #ef4444;
     box-shadow: inset 0 0 10px rgba(239,68,68,0.6);
   }
-
   .card.taken-them img { opacity: 0; }
 
   /* Feedback drag */
@@ -122,7 +121,6 @@
     z-index: 3;
     transform: scale(0.96);
   }
-
   .card.dragging-them {
     border-color: #ef4444;
     box-shadow: 0 0 14px rgba(239,68,68,1);
@@ -141,14 +139,12 @@
     flex-direction: column;
     gap: 3px;
   }
-
   .footer .title-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 4px;
   }
-
   .footer .title {
     font-size: 0.7rem;
     color: #4ade80;
@@ -173,21 +169,17 @@
     gap: 1px;
     min-width: 0;
   }
-
   .stat .icon {
     font-size: clamp(0.8rem, 3vw, 1rem);
     line-height: 1;
   }
-
   .stat .value {
     font-size: clamp(0.7rem, 2.8vw, 0.95rem);
     font-weight: bold;
     line-height: 1;
     color: #fbbf24;
   }
-
   .stat.zero .value { color: #555; }
-
   .stat .label {
     font-size: 0.5rem;
     color: #888;
@@ -195,7 +187,7 @@
     letter-spacing: 0.03em;
   }
 
-  /* Primiera: 4 mini-icone dei semi con valore */
+  /* Primiera */
   .primiera-box {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -204,7 +196,6 @@
     border-radius: 5px;
     padding: 2px;
   }
-
   .primiera-cell {
     display: flex;
     flex-direction: column;
@@ -217,12 +208,10 @@
     transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     border: 1px solid transparent;
   }
-
   .primiera-cell .suit-icon {
     font-size: clamp(0.65rem, 2.4vw, 0.85rem);
     line-height: 1;
   }
-
   .primiera-cell .card-val {
     font-size: clamp(0.65rem, 2.6vw, 0.9rem);
     font-weight: bold;
@@ -230,26 +219,15 @@
     color: #fbbf24;
     min-height: 0.9em;
   }
-
   .primiera-cell.empty .card-val { color: #444; }
-
-  /* Cella "vinta matematicamente" (hai il 7 di quel seme) */
   .primiera-cell.won {
     background: #14532d;
     border-color: #22c55e;
     box-shadow: 0 0 8px rgba(34,197,94,0.7);
   }
-
   .primiera-cell.won .card-val {
     color: #22c55e;
     text-shadow: 0 0 6px rgba(34,197,94,0.9);
-  }
-
-  /* Stessa cosa ma per l'avversario: resta verde, è universale */
-  .header .primiera-cell.won {
-    background: #14532d;
-    border-color: #22c55e;
-    box-shadow: 0 0 8px rgba(34,197,94,0.7);
   }
 
   /* ── RESET ── */
@@ -258,7 +236,6 @@
     display: flex;
     justify-content: flex-end;
   }
-
   .reset-bar button {
     background: #ef4444;
     color: #fff;
@@ -290,15 +267,12 @@
     line-height: 1.7;
     border: 1px solid #444;
   }
-
   .hint.show { opacity: 1; }
-
   .hint b { color: #fbbf24; }
 </style>
 </head>
 <body>
 
-  <!-- ═══ HEADER: AVVERSARIO ═══ -->
   <div class="header">
     <div class="title-row">
       <span class="title">▼ LORO</span>
@@ -306,10 +280,8 @@
     <div class="stats" id="stats-them"></div>
   </div>
 
-  <!-- ═══ GRIGLIA ═══ -->
   <div class="grid" id="grid"></div>
 
-  <!-- ═══ FOOTER: NOI ═══ -->
   <div class="footer">
     <div class="stats" id="stats-us"></div>
     <div class="title-row">
@@ -317,12 +289,10 @@
     </div>
   </div>
 
-  <!-- ═══ RESET ═══ -->
   <div class="reset-bar">
     <button onclick="resetAll()">RESET</button>
   </div>
 
-  <!-- HINT -->
   <div class="hint" id="hint">
     <b>Tap</b> = carta uscita<br>
     <b>Trascina giù ↓</b> = presa nostra<br>
@@ -338,24 +308,16 @@
   const SUITS_ORDER = ['SPADE', 'COPPE', 'BASTONI', 'DENARI'];
   const ROWS = 10;
   const COLS = 4;
-  const STORAGE_KEY = 'scopa_mono_v5';
-  const DRAG_THRESHOLD = 25;
+  const STORAGE_KEY = 'scopa_mono_v6';
+  const DRAG_THRESHOLD = 15;  // px minimi per drag (abbassato, era 25)
+  const MAX_ROW = 7;
 
   const PRIMIERA_VALUE = {
     1: 16, 2: 12, 3: 13, 4: 14, 5: 15, 6: 18, 7: 21,
     8: 10, 9: 10, 10: 10
   };
 
-  // Il valore massimo possibile per la primiera in un seme è il 7 (21 punti).
-  // Se un giocatore ha il 7 di un seme, quel seme è "matematicamente vinto"
-  // → nessun altro potrà mai superarlo.
-  const MAX_ROW = 7;
-
-  // ═══════════════════════════════════════════════
-  //  STATO
-  // ═══════════════════════════════════════════════
   let cardStates = new Array(ROWS * COLS).fill(0);
-  // 0 = nuova, 1 = uscita, 2 = presa da NOI, 3 = presa da LORO
 
   // ═══════════════════════════════════════════════
   //  UTILITÀ
@@ -365,7 +327,6 @@
     const col = index % COLS;
     return { row, col, suit: SUITS[col] };
   }
-
   function cardFileName(index) {
     const { row, suit } = cardInfo(index);
     return `${row} ${suit}.jpg`;
@@ -387,6 +348,7 @@
       const img = document.createElement('img');
       img.src = cardFileName(index);
       img.alt = `${row} ${SUITS[col]}`;
+      img.draggable = false;
       img.onerror = function() {
         this.style.display = 'none';
         card.style.background = '#333';
@@ -409,76 +371,140 @@
   const allCards = () => document.querySelectorAll('.card');
 
   // ═══════════════════════════════════════════════
-  //  TAP / DRAG
+  //  GESTIONE TAP / DRAG (riscritta)
   // ═══════════════════════════════════════════════
+  //  Ogni carta riceve solo "pointerdown" (o touchstart/mousedown).
+  //  Poi il tracking avviene su document per non perdere gli eventi.
+  // ═══════════════════════════════════════════════
+  let activeDrag = null;
+  // activeDrag = { index, card, startX, startY, mode }
+
   function attachHandlers(card, index) {
-    let startX = 0, startY = 0;
-    let tracking = false;
-    let dragMode = null;
-
-    const onPointerDown = (e) => {
+    card.addEventListener('pointerdown', (e) => {
       if (cardStates[index] !== 0) return;
-      tracking = true;
-      dragMode = null;
-      startX = e.clientX;
-      startY = e.clientY;
-      card.setPointerCapture(e.pointerId);
-    };
+      e.preventDefault();
+      startDrag(index, card, e.clientX, e.clientY);
+    });
 
-    const onPointerMove = (e) => {
-      if (!tracking) return;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      const dist = Math.hypot(dx, dy);
+    // Fallback per browser senza PointerEvent (vecchi iOS)
+    card.addEventListener('touchstart', (e) => {
+      if (window.PointerEvent) return;
+      if (cardStates[index] !== 0) return;
+      const t = e.touches[0];
+      startDrag(index, card, t.clientX, t.clientY);
+      e.preventDefault();
+    }, { passive: false });
 
-      if (dist > DRAG_THRESHOLD) {
-        const mode = dy > 0 ? 'us' : 'them';
-        if (mode !== dragMode) {
-          card.classList.remove('dragging-us', 'dragging-them');
-          dragMode = mode;
-          card.classList.add(mode === 'us' ? 'dragging-us' : 'dragging-them');
-        }
-      } else if (dragMode) {
-        card.classList.remove('dragging-us', 'dragging-them');
-        dragMode = null;
-      }
-    };
+    card.addEventListener('mousedown', (e) => {
+      if (window.PointerEvent) return;
+      if (cardStates[index] !== 0) return;
+      e.preventDefault();
+      startDrag(index, card, e.clientX, e.clientY);
+    });
 
-    const onPointerUp = (e) => {
-      if (!tracking) return;
-      tracking = false;
-      card.classList.remove('dragging-us', 'dragging-them');
-
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist <= DRAG_THRESHOLD) {
-        applicaStato(index, 1);       // tap → uscita
-      } else if (dy > 0) {
-        applicaStato(index, 2);       // giù → noi
-      } else {
-        applicaStato(index, 3);       // su → loro
-      }
-
-      dragMode = null;
-      ricalcolaPunteggi();
-      saveState();
-    };
-
-    const onPointerCancel = () => {
-      tracking = false;
-      dragMode = null;
-      card.classList.remove('dragging-us', 'dragging-them');
-    };
-
-    card.addEventListener('pointerdown', onPointerDown);
-    card.addEventListener('pointermove', onPointerMove);
-    card.addEventListener('pointerup', onPointerUp);
-    card.addEventListener('pointercancel', onPointerCancel);
     card.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
+  function startDrag(index, card, x, y) {
+    activeDrag = {
+      index, card,
+      startX: x, startY: y,
+      mode: null
+    };
+    card.classList.add('dragging-us'); // feedback neutro iniziale
+    card.classList.remove('dragging-us');
+    // Non aggiungo classi finché non supera la soglia
+  }
+
+  function updateDrag(x, y) {
+    if (!activeDrag) return;
+    const dx = x - activeDrag.startX;
+    const dy = y - activeDrag.startY;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist > DRAG_THRESHOLD) {
+      const mode = dy > 0 ? 'us' : 'them';
+      if (mode !== activeDrag.mode) {
+        activeDrag.card.classList.remove('dragging-us', 'dragging-them');
+        activeDrag.mode = mode;
+        activeDrag.card.classList.add(mode === 'us' ? 'dragging-us' : 'dragging-them');
+      }
+    } else if (activeDrag.mode) {
+      activeDrag.card.classList.remove('dragging-us', 'dragging-them');
+      activeDrag.mode = null;
+    }
+  }
+
+  function endDrag(x, y) {
+    if (!activeDrag) return;
+    const { index, card, startX, startY, mode } = activeDrag;
+    card.classList.remove('dragging-us', 'dragging-them');
+
+    const dx = x - startX;
+    const dy = y - startY;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist <= DRAG_THRESHOLD) {
+      applicaStato(index, 1); // tap → uscita
+    } else if (dy > 0) {
+      applicaStato(index, 2); // giù → noi
+    } else {
+      applicaStato(index, 3); // su → loro
+    }
+
+    activeDrag = null;
+    ricalcolaPunteggi();
+    saveState();
+  }
+
+  function cancelDrag() {
+    if (activeDrag) {
+      activeDrag.card.classList.remove('dragging-us', 'dragging-them');
+      activeDrag = null;
+    }
+  }
+
+  // Listener globali (sempre attivi)
+  document.addEventListener('pointermove', (e) => {
+    if (!activeDrag) return;
+    updateDrag(e.clientX, e.clientY);
+  });
+  document.addEventListener('pointerup', (e) => {
+    if (!activeDrag) return;
+    endDrag(e.clientX, e.clientY);
+  });
+  document.addEventListener('pointercancel', cancelDrag);
+
+  // Fallback touch (browser senza PointerEvent)
+  document.addEventListener('touchmove', (e) => {
+    if (window.PointerEvent || !activeDrag) return;
+    const t = e.touches[0];
+    updateDrag(t.clientX, t.clientY);
+    e.preventDefault();
+  }, { passive: false });
+  document.addEventListener('touchend', (e) => {
+    if (window.PointerEvent || !activeDrag) return;
+    const t = e.changedTouches[0];
+    endDrag(t.clientX, t.clientY);
+  });
+  document.addEventListener('touchcancel', () => {
+    if (window.PointerEvent) return;
+    cancelDrag();
+  });
+
+  // Fallback mouse (browser senza PointerEvent)
+  document.addEventListener('mousemove', (e) => {
+    if (window.PointerEvent || !activeDrag) return;
+    updateDrag(e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseup', (e) => {
+    if (window.PointerEvent || !activeDrag) return;
+    endDrag(e.clientX, e.clientY);
+  });
+
+  // ═══════════════════════════════════════════════
+  //  APPLICAZIONE STATO
+  // ═══════════════════════════════════════════════
   function applicaStato(index, nuovoStato) {
     cardStates[index] = nuovoStato;
     const el = allCards()[index];
@@ -497,7 +523,6 @@
     const container = document.getElementById(containerId);
     container.innerHTML = '';
 
-    // 2 statistiche semplici: Ori, Carte
     const items = [
       { key: 'denari', icon: '🪙', label: 'Ori'   },
       { key: 'carte',  icon: '🃏', label: 'Carte' }
@@ -527,7 +552,6 @@
       container.appendChild(div);
     });
 
-    // Primiera: 4 celle (una per seme)
     const priBox = document.createElement('div');
     priBox.className = 'primiera-box';
     priBox.dataset.player = chi;
@@ -559,7 +583,7 @@
   buildStatsFor('stats-us', 2);
 
   // ═══════════════════════════════════════════════
-  //  CALCOLO STATS
+  //  CALCOLO
   // ═══════════════════════════════════════════════
   function calcolaStats(chi) {
     let denari = 0;
@@ -587,21 +611,18 @@
       const containerId = chi === 2 ? 'stats-us' : 'stats-them';
       const container = document.getElementById(containerId);
 
-      // Ori
       const ori = container.querySelector(`.stat[data-key="denari"]`);
       if (ori) {
         ori.querySelector('.value').textContent = s.denari;
         ori.classList.toggle('zero', s.denari === 0);
       }
 
-      // Carte
       const carte = container.querySelector(`.stat[data-key="carte"]`);
       if (carte) {
         carte.querySelector('.value').textContent = s.numCarte;
         carte.classList.toggle('zero', s.numCarte === 0);
       }
 
-      // Primiera: per seme mostra la carta più alta + evidenzia se vinta (7)
       SUITS_ORDER.forEach(suit => {
         const cell = container.querySelector(`.primiera-cell[data-suit="${suit}"]`);
         if (!cell) return;
@@ -610,7 +631,6 @@
         if (b) {
           valEl.textContent = b.row;
           cell.classList.remove('empty');
-          // Evidenzia in verde se hai il 7 (massimo possibile → vinto matematicamente)
           cell.classList.toggle('won', b.row === MAX_ROW);
         } else {
           valEl.textContent = '—';
@@ -622,7 +642,7 @@
   }
 
   // ═══════════════════════════════════════════════
-  //  RESET
+  //  RESET / SALVATAGGIO
   // ═══════════════════════════════════════════════
   function resetAll() {
     if (!confirm('Azzerare tutto?')) return;
@@ -630,9 +650,6 @@
     location.reload();
   }
 
-  // ═══════════════════════════════════════════════
-  //  SALVATAGGIO
-  // ═══════════════════════════════════════════════
   function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cardStates));
   }
@@ -653,12 +670,12 @@
   //  HINT
   // ═══════════════════════════════════════════════
   function showHintOnce() {
-    if (localStorage.getItem('scopa_mono_hint_v5')) return;
+    if (localStorage.getItem('scopa_mono_hint_v6')) return;
     const hint = document.getElementById('hint');
     hint.classList.add('show');
     setTimeout(() => {
       hint.classList.remove('show');
-      localStorage.setItem('scopa_mono_hint_v5', '1');
+      localStorage.setItem('scopa_mono_hint_v6', '1');
     }, 6000);
   }
 
